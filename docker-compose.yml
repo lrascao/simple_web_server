@@ -1,0 +1,133 @@
+#
+# This docker compose will spin up all infrastructure necessary to run 8 Ball Pool,
+#
+# Endpoints:
+#
+#   - S3 (to deploy configuration into)
+#       - http://localhost:4572
+#   - Localstack web UI
+#       - http://localhost:9090
+#   - Redis
+#       - localhost:6379
+#   - Web service endpoint: 
+#       - http://<ip address>:8585
+#       - available routes:
+#           GET /v1/health (curl -v -X GET http://localhost:8585/v1/health) 
+#
+#           PUT /v1/account/<username>  (curl -X PUT http://localhost:8585/v1/account/<name>)
+#           GET /v1/account/<userid>    (curl curl -X GET http://localhost:8585/v1/account/<userid>)
+#
+# Data storage:
+#
+#   - Game Configuration
+#        - docker/localstack/data/configuration/<MAJOR>
+#   - DynamoDB
+#       - docker/localstack/data/dynamodb
+# 
+version: '3.7'
+services:
+  aws:
+    image: localstack/localstack:0.11.0
+    hostname: aws.local
+    ports:
+        - "4567-4568:4567-4568" # exclude dynamodb port (4569), we're using it below outside of localstack
+        - "4570-4584:4570-4584"
+        - "${PORT_WEB_UI-9090}:${PORT_WEB_UI-9090}"
+    environment:
+        - SERVICES=s3,sqs,ec2,sns
+        - PORT_WEB_UI=${PORT_WEB_UI-9090}
+        - DATA_DIR=/tmp/localstack/data
+        - DEFAULT_REGION=us-west-2
+    networks:
+      - backend
+    volumes:
+        - ./docker/localstack/init.d:/docker-entrypoint-initaws.d
+        - ./docker/localstack/data:/tmp/localstack/data
+    # here we're depending on dynamodb because we want to use the localstack init
+    # scripts to create the dynamodb tables
+    depends_on:
+        - dynamodb
+    expose:
+        - "4572"  # localstack's S3 service port
+  dynamodb:
+    image: amazon/dynamodb-local:1.12.0
+    hostname: dynamodb.local
+    environment:
+        - ./Djava.library.path=./DynamoDBLocal_lib
+    working_dir: /home/dynamodblocal
+    volumes:
+        - ./docker/localstack/data/dynamodb:/home/dynamodblocal/data
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "./data", "-port", "4569"]
+    ports:
+      - "4569:4569"
+    networks:
+      - backend
+    expose:
+      - 4569
+  redis:
+    image: redis:3.2.12
+    hostname: redis.local
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    volumes:
+        - ./docker/redis.conf:/tmp/redis.conf
+    command: [ "redis-server", "/tmp/redis.conf" ]
+  simple-web-service:
+    # to attach to this Erlang node:
+    #   docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
+    image: simple_web_server:latest
+    hostname: webserver.local
+    # https://docs.docker.com/compose/compose-file/#ports
+    ports:
+      - target: 8585
+        published: 8585
+        protocol: tcp
+        mode: host
+    environment:
+        - AWS_REGION=us-west-2
+        - AWS_ACCOUNT_ID=000000000000
+    # https://docs.docker.com/compose/compose-file/#network-configuration-reference
+    networks:
+      - frontend
+      - backend
+    links:
+        # creates internal alias so we don't have to go around
+        # changing all our overlay vars
+        - dynamodb:dynamodb.us-west-2.amazonaws.com
+        - aws:sqs.us-west-2.amazonaws.com
+        - aws:ec2.us-west-2.amazonaws.com
+        - aws:sns.us-west-2.amazonaws.com
+        - aws:s3.us-west-2.amazonaws.com
+    depends_on:
+        - aws
+        - redis
+    # https://docs.docker.com/compose/compose-file/#expose
+    # Expose ports without publishing them to the host machine - they’ll only be accessible to linked services.
+    # Only the internal port can be specified.
+    expose:
+        - "8585"
+  shell:
+    # to attach to this container:
+    #   docker-compose exec shell bash
+    image: bash
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+    networks:
+      - frontend
+      - backend
+    links:
+        - dynamodb:dynamodb.us-west-2.amazonaws.com
+        - aws:sqs.us-west-2.amazonaws.com
+        - aws:ec2.us-west-2.amazonaws.com
+        - aws:sns.us-west-2.amazonaws.com
+        - aws:s3.us-west-2.amazonaws.com
+
+networks:
+  frontend:
+      driver: bridge
+  backend:
+      driver: bridge
+

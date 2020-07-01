@@ -9,6 +9,12 @@
         stdlib,
         cowboy,
         erlydtl,
+        jsx,
+        erlcloud,
+        lager,
+        lhttpc,
+        recon,
+        uuid,
         jsx
     ]},
     {mod, {simple_web_server_app, []}},

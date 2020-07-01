@@ -27,6 +27,8 @@ do_cowboy_configure() ->
         {'_', [
             {"/", simple_web_server_default_router, <<"index.html">>},
             {"/static/[...]", cowboy_static, {priv_dir, simple_web_server, "static"}},
+            {"/v1/health", simple_web_server_health_handler_v1, []},
+            {"/v1/[...]", simple_web_server_rest_api_v1, []},
             {"/[...]", cowboy_static, {priv_dir, simple_web_server, "pages"}}
         ]}
     ]),

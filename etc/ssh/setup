@@ -1,0 +1,67 @@
+#!/bin/bash
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+usage()
+{
+    echo "setup --ssh-port <ssh port>\n"\
+         "      --ssh-username <ssh username>\n"\
+         "      --ssh-password <ssh password>"
+}
+
+# check for empty args
+if [[ $@ = '' ]]; then
+    usage
+    exit 1
+fi
+# Parse arguments
+TEMP=$(getopt -n "$0" --options v: --longoptions ssh-port:,ssh-username:,ssh-password:,help:: -- $@)
+# Die if they fat finger arguments, this program will be run as root
+[ $? = 0 ] || die "Error parsing arguments. release --help"
+
+eval set -- "$TEMP"
+while true; do
+    case $1 in
+        -h|--help)
+            usage
+            exit 0
+        ;;
+        --ssh-port)
+            SSH_PORT=$2; shift; shift; continue
+        ;;
+        --ssh-username)
+            SSH_USERNAME=$2; shift; shift; continue
+        ;;
+        --ssh-password)
+            SSH_PASSWORD=$2; shift; shift; continue
+        ;;
+        --)
+            # no more arguments to parse
+            break
+        ;;
+        *)
+            printf "Unknown option %s\n" "$1"
+            usage
+            exit 1
+        ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+        ;;
+    esac
+done
+eval set -- "$@"
+
+# generate the host ED25519 key
+ssh-keygen -t ed25519 -f ssh_host_ed25519_key -N ""
+
+# now generate the sshd_config
+echo "{ssh_port, $SSH_PORT}." > sshd_config
+echo "{user_passwords, [{\"$SSH_USERNAME\", \"$SSH_PASSWORD\"}]}." >> sshd_config
+
+echo > authorized_keys
+
+echo "generate ssh key on your host and add public key to authorized_keys"
+echo "  ssh-keygen -t rsa -f user_rsa_key -N \"\""
+echo "  cat user_rsa_key.pub > authorized_keys"
+

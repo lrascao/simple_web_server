@@ -34,13 +34,33 @@ handle_request(<<"PUT">>, <<"/v1/account/", Name/binary>>, Req0) ->
     lager:debug("creating new account for ~p",
                 [Name]),
     {ok, UserId} = simple_web_server_db:new_account(Name),
+    % cache the newly inserted data, up to 10 seconds
+    mc_redis:q(["SETEX", UserId, 10,
+                jsx:encode(#{user_id => UserId,
+                             name => Name})]),
     {ok, UserId, 200, Req0};
 handle_request(<<"GET">>, <<"/v1/account/", UserId/binary>>, Req0) ->
     lager:debug("looking up ~p's account",
                 [UserId]),
-    case simple_web_server_db:read_account(UserId) of
-        {ok, #{name := _UserName} = Data} ->
-            {ok, jsx:encode(Data), 200, Req0};
-        _ ->
-            {ok, <<>>, 404, Req0}
+    % hit the cache first
+    case mc_redis:q(["GET", UserId]) of
+        {ok, undefined} ->
+            lager:debug("cache miss on key ~p, hitting db",
+                        [UserId]),
+            case simple_web_server_db:read_account(UserId) of
+                {ok, #{name := Name} = Data} ->
+                    % cache the newly fetched data, up to 10 seconds
+                    mc_redis:q(["SETEX", UserId, 10,
+                                jsx:encode(#{user_id => UserId,
+                                             name => Name})]),
+                    {ok, jsx:encode(Data), 200, Req0};
+                _ ->
+                    {ok, <<>>, 404, Req0}
+            end;
+        {ok, Data} ->
+            lager:debug("cache hit on key ~p",
+                        [UserId]),
+            % no need to jsx encode here, it was already encoded when
+            % cached
+            {ok, Data, 200, Req0}
     end.

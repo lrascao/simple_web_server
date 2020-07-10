@@ -30,7 +30,7 @@ create_tables() ->
         end.
 
 new_account(Name) ->
-    UserId = uuid:to_string(uuid:v4()),
+    UserId = list_to_binary(uuid:to_string(uuid:v4())),
     Fields = [{?FIELD_USER_ID, UserId},
               {?FIELD_USER_NAME, Name}],
     TableName = <<"account">>,

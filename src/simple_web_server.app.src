@@ -15,7 +15,8 @@
         lhttpc,
         recon,
         uuid,
-        jsx
+        jsx,
+        mc_redis
     ]},
     {mod, {simple_web_server_app, []}},
     {env, [

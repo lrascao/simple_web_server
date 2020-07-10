@@ -1,9 +1,15 @@
 # syntax = docker/dockerfile:experimental
+
+# https://docs.docker.com/engine/reference/builder/#from
+#   "The FROM instruction initializes a new build stage and sets the
+#    Base Image for subsequent instructions."
 FROM erlang:21.3.8.7-alpine as service-builder
+# https://docs.docker.com/engine/reference/builder/#label
+#   "The LABEL instruction adds metadata to an image."
 LABEL stage=builder
 
-# the following argument will allows to delete the stages that
-# are built afterwards (like in jenkins)
+# the following argument will allow to delete the stages that
+# become too old (like in jenkins)
 ARG BUILD_ID
 LABEL build=$BUILD_ID
 
@@ -28,9 +34,13 @@ RUN --mount=type=cache,id=apk,sharing=locked,target=/var/cache/apk \
 #   Host external-repo external-repo.com
 #     HostName external-repo.com
 #     IdentityFile ~/.ssh/external-repo-pem.key
+#
 #   StrictHostKeyChecking no
 #
-# COPY docker/ssh-config /root/.ssh/config
+# also notice that you will need to link/copy the .pem of your external
+# dependency repo to the root of this project so the --mount directive below
+# can find it
+COPY docker/ssh-config /root/.ssh/config
 
 # create a new deps compiling layer for later re-use
 FROM service-builder as service-deps-compiler
@@ -44,7 +54,7 @@ RUN --mount=id=hex-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
     # the following line is how you transport secrets into the container, one
     # such example for a secret is the .pem key that allows fetch of private deps
     # from a repo as in the example above
-    # --mount=type=secret,id=external-repo-pem.key,target=/root/.ssh/external-repo-pem.key \
+    --mount=type=secret,id=stash-miniclip-com-pem.key,target=/root/.ssh/stash-miniclip-com-pem.key \
     --mount=type=ssh \
     rebar3 as docker compile
 
@@ -59,7 +69,7 @@ COPY . .
 
 RUN --mount=id=hex-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
     # same comment as the one above
-    # --mount=type=secret,id=miniclip-stash.key,target=/root/.ssh/miniclip-stash.key \
+    --mount=type=secret,id=stash-miniclip-com-pem.key,target=/root/.ssh/stash-miniclip-com-pem.key \
     --mount=type=ssh \
     rebar3 as docker release
 

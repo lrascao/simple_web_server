@@ -18,3 +18,5 @@ rebar3.crashdump
 *.swp
 
 docker/localstack/data
+
+stash-miniclip-com-pem.key

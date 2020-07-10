@@ -74,6 +74,8 @@ services:
     volumes:
         - ./docker/redis.conf:/tmp/redis.conf
     command: [ "redis-server", "/tmp/redis.conf" ]
+    expose:
+      - 6379
   simple-web-service:
     # to attach to this Erlang node:
     #   docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console

@@ -107,5 +107,4 @@ if [[ $COMMAND = 'upload' && $VERSION = 'undefined' ]]; then
     exit 1
 fi
 
-echo $COMMAND $ENDPOINT $VERSION $FROM
 eval $COMMAND $ENDPOINT $VERSION $FROM

@@ -1,4 +1,4 @@
--module(simple_web_server_rest_api_v1).
+-module(simple_web_server_account_api_v1).
 
 -behaviour(cowboy_handler).
 
@@ -34,8 +34,9 @@ handle_request(<<"PUT">>, <<"/v1/account/", Name/binary>>, Req0) ->
     lager:debug("creating new account for ~p",
                 [Name]),
     {ok, UserId} = simple_web_server_db:new_account(Name),
-    % cache the newly inserted data, up to 10 seconds
-    mc_redis:q(["SETEX", UserId, 10,
+    % cache the newly inserted data 
+    {ok, TTL} = config:get(redis_ttl, 10),
+    mc_redis:q(["SETEX", UserId, TTL,
                 jsx:encode(#{user_id => UserId,
                              name => Name})]),
     {ok, UserId, 200, Req0};
@@ -49,8 +50,9 @@ handle_request(<<"GET">>, <<"/v1/account/", UserId/binary>>, Req0) ->
                         [UserId]),
             case simple_web_server_db:read_account(UserId) of
                 {ok, #{name := Name} = Data} ->
-                    % cache the newly fetched data, up to 10 seconds
-                    mc_redis:q(["SETEX", UserId, 10,
+                    % cache the newly fetched data
+                    {ok, TTL} = config:get(redis_ttl, 10),
+                    mc_redis:q(["SETEX", UserId, TTL,
                                 jsx:encode(#{user_id => UserId,
                                              name => Name})]),
                     {ok, jsx:encode(Data), 200, Req0};

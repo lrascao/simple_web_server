@@ -1,0 +1,111 @@
+#!/bin/sh
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+usage()
+{
+    echo "config download|upload|latest <options>"
+    echo "  options:"
+	echo "   [--endpoint <target version>]"
+	echo "   [--version <version>]"
+	echo "   [--from <folder>]"
+	echo
+	echo "Examples:"
+	echo " config latest"
+	echo " config latest --version <version>"
+	echo " config download --version <version>"
+	echo " config upload --version <version> [--from <folder, default is cwd>]"
+}
+
+download()
+{
+    ENDPOINT=$1
+    VERSION=$2
+
+    aws --quiet --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/$VERSION/config.json config.json
+}
+
+upload()
+{
+    ENDPOINT=$1
+    VERSION=$2
+    FROM=$3
+
+    aws --quiet --endpoint-url=$ENDPOINT s3 cp $FROM/config.json s3://simple-web-server/$VERSION/config.json
+}
+
+latest()
+{
+    ENDPOINT=$1
+    VERSION=$2
+
+    if [[ $VERSION == 'undefined' ]]; then
+        aws --quiet --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/latest.txt .
+        LATEST=$(cat latest.txt)
+        rm latest.txt
+        echo $LATEST
+        return
+    fi
+
+    echo $VERSION > latest.txt
+    aws --quiet --endpoint-url=$ENDPOINT s3 cp latest.txt s3://simple-web-server/latest.txt
+    rm latest.txt
+}
+
+COMMAND=$1; shift
+
+# check for empty args
+if [[ $COMMAND != 'latest' && $@ = '' ]]; then
+    usage
+    exit 1
+fi
+
+# Parse arguments
+TEMP=$(getopt -n version --options e:,v:,f:,h:: --longoptions endpoint:,version:,from:,help:: -- $@)
+# Die if they fat finger arguments, this program will be run as root
+[ $? = 0 ] || die "Error parsing arguments. version --help"
+
+# by default, module version attributes will not be bumped
+VERSION='undefined'
+ENDPOINT='http://localhost:4572/'
+FROM=`pwd`
+
+eval set -- "$TEMP"
+while true; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+            ;;
+            -e|--endpoint)
+                ENDPOINT=$2; shift; shift; continue
+            ;;
+            -v|--version)
+                VERSION=$2; shift; shift; continue
+            ;;
+		    -f|--from)
+				FROM=$2; shift; shift; continue
+		    ;;
+            --)
+                # no more arguments to parse
+                break
+            ;;
+            *)
+                printf "Unknown option %s\n" "$1"
+                exit 1
+            ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                exit 1
+            ;;
+        esac
+done
+eval set -- "$@"
+
+if [[ $COMMAND = 'upload' && $VERSION = 'undefined' ]]; then
+    usage
+    exit 1
+fi
+
+echo $COMMAND $ENDPOINT $VERSION $FROM
+eval $COMMAND $ENDPOINT $VERSION $FROM

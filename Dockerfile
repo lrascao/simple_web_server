@@ -1,5 +1,8 @@
 # syntax = docker/dockerfile:experimental
 
+# This Dockerfile makes use of Multi-stage builds
+#   https://docs.docker.com/develop/develop-images/multistage-build/
+
 # https://docs.docker.com/engine/reference/builder/#from
 #   "The FROM instruction initializes a new build stage and sets the
 #    Base Image for subsequent instructions."
@@ -8,24 +11,34 @@ FROM erlang:21.3.8.7-alpine as service-builder
 #   "The LABEL instruction adds metadata to an image."
 LABEL stage=builder
 
+# https://docs.docker.com/engine/reference/builder/#user
+USER root
+
 # the following argument will allow to delete the stages that
 # become too old (like in jenkins)
 ARG BUILD_ID
 LABEL build=$BUILD_ID
 
-# located in the image
+# WORKDIR is located in the image
+#   https://docs.docker.com/engine/reference/builder/#workdir
 WORKDIR /apps/service
+# ENV sets the environment variable <key> to the value <value>, in this
+# case we're setting the rebar3 `_build` to be available later on
+#   https://docs.docker.com/engine/reference/builder/#env 
 ENV REBAR_BASE_DIR /apps/service/_build
 
 # Install git for fetching non-hex depenencies.
 # Add any other Alpine libraries needed to compile the project here.
 # See https://wiki.alpinelinux.org/wiki/Local_APK_cache for details
 # on the local cache and need for the symlink
-RUN --mount=type=cache,id=apk,sharing=locked,target=/var/cache/apk \
-    mkdir ~/.ssh && \
+RUN --mount=id=apk,type=cache,sharing=locked,target=/var/cache/apk \
     ln -s /var/cache/apk /etc/apk/cache && \
     apk update && \
     apk add --update openssh-client git bash
+
+# create the dir that will hold our ssh config needed to fetch private repos 
+# (eg. stash)
+RUN mkdir /root/.ssh
 
 # this local ssh config file contains the all the necessary
 # ssh configuration of host/keys
@@ -47,10 +60,10 @@ FROM service-builder as service-deps-compiler
 LABEL stage=deps-compiler
 
 # build and cache dependencies as their own layer
-# every time you change something in the rebar.config or rebar.lock
+# every time you change something in the rebar.config or rebar.lock files
 # this layer will get rebuilt
 COPY rebar.config rebar.lock .
-RUN --mount=id=hex-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
+RUN --mount=id=deps-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
     # the following line is how you transport secrets into the container, one
     # such example for a secret is the .pem key that allows fetch of private deps
     # from a repo as in the example above
@@ -67,11 +80,8 @@ LABEL stage=app-compiler
 # means the actual application and not the dependencies (look up .dockerignore)
 COPY . .
 
-RUN --mount=id=hex-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
-    # same comment as the one above
-    --mount=type=secret,id=stash-miniclip-com-pem.key,target=/root/.ssh/stash-miniclip-com-pem.key \
-    --mount=type=ssh \
-    rebar3 as docker release
+# same comment as the one above
+RUN rebar3 as docker release
 
 # create a new release layer
 FROM service-app-compiler as service-releaser
@@ -85,8 +95,7 @@ RUN --mount=type=cache,id=apk,sharing=locked,target=/var/cache/apk \
     apk add --update tar
 
 # generate the release tarball and unpack it to the target dir
-RUN --mount=id=hex-cache,type=cache,sharing=locked,target=/root/.cache/rebar3 \
-    rebar3 as docker tar && \
+RUN rebar3 as docker tar && \
     tar -zxvf $REBAR_BASE_DIR/docker/rel/*/*.tar.gz -C /opt/rel
 
 # this is the final runner layer, notice how it diverges from the original erlang

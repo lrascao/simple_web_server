@@ -1,5 +1,5 @@
 #
-# This docker compose will spin up all infrastructure necessary to run 8 Ball Pool,
+# This docker compose will spin up all infrastructure necessary to run a simple web server,
 #
 # Endpoints:
 #
@@ -52,6 +52,12 @@ services:
     networks:
       - backend
     volumes:
+        # /docker-entrypoint-initaws.d is a reserved folder for localstack that
+        # is a sort of init.d, all scripts in it will get executed in alphabetical
+        # order
+        #
+        # /tmp/localstack/data is DATADIR defined above mirrored locally to
+        # ./docker/localstack/data
         - ./docker/localstack/init.d:/docker-entrypoint-initaws.d
         - ./docker/localstack/data:/tmp/localstack/data
     # here we're depending on dynamodb because we want to use the localstack init
@@ -67,6 +73,8 @@ services:
         - ./Djava.library.path=./DynamoDBLocal_lib
     working_dir: /home/dynamodblocal
     volumes:
+        # the dynamodb docker image working directory is /home/dynamodblocal,
+        # we mirror it to the local folder ./docker/localstack/data/dynamodb
         - ./docker/localstack/data/dynamodb:/home/dynamodblocal/data
     command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "./data", "-port", "4569"]
     ports:

@@ -6,5 +6,5 @@ _build
 _checkouts
 Dockerfile
 .dockerignore
-external-repo-pem.key
+stash-miniclip-com-pem.key
 

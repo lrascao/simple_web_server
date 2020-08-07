@@ -30,6 +30,7 @@ do_cowboy_configure() ->
             {"/v1/health", simple_web_server_health_handler_v1, []},
             {"/v1/account/[...]", simple_web_server_account_api_v1, []},
             {"/v1/config/[...]", simple_web_server_config_api_v1, []},
+            {"/v1/setup/[...]", simple_web_server_setup_api_v1, []},
             {"/[...]", cowboy_static, {priv_dir, simple_web_server, "pages"}}
         ]}
     ]),

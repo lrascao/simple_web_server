@@ -1,5 +1,6 @@
 #
-# This docker compose will spin up all infrastructure necessary to run a simple web server,
+# This docker compose will spin up all infrastructure necessary to run a simple web server
+# Full docker-compose file reference: (https://docs.docker.com/compose/compose-file/)
 #
 # Endpoints:
 #
@@ -39,10 +40,12 @@ version: '3.0'
 services:
   aws:
     image: localstack/localstack:0.11.0
+    # https://docs.docker.com/compose/compose-file/#ports
     ports:
         - "4567-4568:4567-4568" # exclude dynamodb port (4569), we're using it below outside of localstack
         - "4570-4584:4570-4584"
         - "${PORT_WEB_UI-9090}:${PORT_WEB_UI-9090}"
+    # https://docs.docker.com/compose/compose-file/#environment
     environment:
         - SERVICES=s3,sqs,ec2,sns
         - PORT_WEB_UI=${PORT_WEB_UI-9090}
@@ -103,6 +106,8 @@ services:
     # to attach to this Erlang node:
     #   docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
     image: simple_web_server:latest
+    # https://docs.docker.com/compose/compose-file/#domainname-hostname-ipc-mac_address-privileged-read_only-shm_size-stdin_open-tty-user-working_dir
+    # hostname: webserver.local
     # https://docs.docker.com/compose/compose-file/#ports
     ports:
       - "8585:8585/tcp"

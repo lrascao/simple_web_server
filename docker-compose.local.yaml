@@ -1,0 +1,47 @@
+version: '3.0'
+services:
+  aws:
+    networks:
+      backend:
+        aliases:
+          - sqs.us-west-2.amazonaws.com
+          - ec2.us-west-2.amazonaws.com
+          - sns.us-west-2.amazonaws.com
+          - s3.us-west-2.amazonaws.com
+          - dynamodb.us-west-2.amazonaws.com
+    expose:
+        # localstack's Edge router service port
+        - "4566"  
+  redis:
+    networks:
+      - backend
+    expose:
+      - 6379
+  simple-web-service:
+    # https://docs.docker.com/compose/compose-file/#domainname-hostname-ipc-mac_address-privileged-read_only-shm_size-stdin_open-tty-user-working_dir
+    # this is required to the host to have to fully qualified domain name which in turn is a requirement
+    # to start up erlang distribution
+    hostname: webserver.local
+    image: simple-web-server:latest
+    depends_on:
+        - aws
+        - redis
+    # https://docs.docker.com/compose/compose-file/#network-configuration-reference
+    networks:
+      - frontend
+      - backend
+    # https://docs.docker.com/compose/compose-file/#expose
+    # Expose ports without publishing them to the host machine - they’ll only be accessible to linked services.
+    # Only the internal port can be specified.
+    expose:
+        - 8585
+  shell:
+    # to attach to this container:
+    #   docker-compose exec shell bash
+    image: bash
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+    networks:
+      - frontend
+      - backend

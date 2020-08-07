@@ -1,0 +1,49 @@
+#!/bin/sh
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+usage()
+{
+    echo "setup"
+    echo "  options:"
+	echo "   [--endpoint <http://localhost:8585>]"
+	echo
+	echo "Examples:"
+	echo " setup"
+}
+
+# Parse arguments
+TEMP=$(getopt -n version --options e:,h:: --longoptions endpoint:,help:: -- $@)
+# Die if they fat finger arguments, this program will be run as root
+[ $? = 0 ] || die "Error parsing arguments. version --help"
+
+# by default, module version attributes will not be bumped
+ENDPOINT='http://localhost:8585'
+
+eval set -- "$TEMP"
+while true; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+            ;;
+            -e|--endpoint)
+                ENDPOINT=$2; shift; shift; continue
+            ;;
+            --)
+                # no more arguments to parse
+                break
+            ;;
+            *)
+                printf "Unknown option %s\n" "$1"
+                exit 1
+            ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                exit 1
+            ;;
+        esac
+done
+eval set -- "$@"
+
+curl --silent -X POST $ENDPOINT/v1/setup/create_tables

@@ -1,0 +1,121 @@
+#!/bin/sh
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+usage()
+{
+    echo "ecs-cli configure|auth|up"
+	echo "   [--aws-profile <profile> --role-arn <role-arn> --mfa-user <mfa-user> --token-code <mfa code>]"
+	echo
+	echo "Examples:"
+    echo " ecs-cli configure"
+	echo " ecs-cli auth --role-arn arn:aws:iam::879202131194:role/Authorizations-Server-Admin --mfa-user arn:aws:iam::091372268929:mfa/luis.rascao --token-code 1234"
+}
+
+auth()
+{
+    AWS_PROFILE=$1
+    ROLE_ARN=$2
+    MFA_USER=$3
+    TOKEN_CODE=$4
+    echo "auth $AWS_PROFILE $ROLE_ARN $MFA_USER $TOKEN_CODE"
+
+    # generate a temporary access/secret token pair
+    aws --profile $AWS_PROFILE sts get-session-token --serial-number $MFA_USER --token-code $TOKEN_CODE --duration 3600 > /tmp/creds.json
+    # and extract them from the output json file
+    AWS_ACCESS_KEY_ID=`cat /tmp/creds.json | jq --raw-output .Credentials.AccessKeyId`
+    AWS_SECRET_ACCESS_KEY=`cat /tmp/creds.json | jq --raw-output .Credentials.SecretAccessKey`
+    AWS_SESSION_TOKEN=`cat /tmp/creds.json | jq  --raw-output .Credentials.SessionToken`
+
+    # use those temporary credentials to assume a role
+    AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN aws sts assume-role --role-arn $ROLE_ARN --role-session-name ecs-cli > /tmp/creds.json
+    AWS_ACCESS_KEY_ID=`cat /tmp/creds.json | jq --raw-output .Credentials.AccessKeyId`
+    AWS_SECRET_ACCESS_KEY=`cat /tmp/creds.json | jq --raw-output .Credentials.SecretAccessKey`
+    AWS_SESSION_TOKEN=`cat /tmp/creds.json | jq --raw-output .Credentials.SessionToken`
+
+    # finally configure the ecs-cli profile that's to be used with all ecs-cli subsequent commands
+    ecs-cli configure profile --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --session-token $AWS_SESSION_TOKEN --profile-name simple-web-server-profile
+}
+
+configure()
+{
+    ecs-cli configure --cluster simple-web-server --default-launch-type FARGATE --region us-west-2 --config-name simple-web-server
+}
+
+up()
+{
+    VPC_ID=$5
+    SUBNETS=$6
+
+    echo "up $VPC_ID $SUBNETS"
+    ecs-cli up --vpc $VPC_ID --subnets $SUBNETS --cluster-config simple-web-server --ecs-profile simple-web-server-profile
+}
+
+COMMAND=$1; shift
+
+# check for empty args
+if [[ $COMMAND = 'auth' && $@ = '' ]]; then
+    usage
+    exit 1
+fi
+
+# Parse arguments
+TEMP=$(getopt -n version --options h::,t:,p:,m:,r:,v:,s: --longoptions help::,aws-profile:,role-arn:,mfa-user:,token-code:,vpc-id:,subnets: -- $@)
+# Die if they fat finger arguments, this program will be run as root
+[ $? = 0 ] || die "Error parsing arguments. version --help"
+
+# by default, module version attributes will not be bumped
+TOKEN_CODE='undefined'
+AWS_PROFILE='miniclip-techops'
+MFA_USER='undefined'
+ROLE_ARN='undefined'
+VPC_ID='vpc-4d1c3228'
+SUBNETS='subnet-125c6e77,subnet-471d4d30,subnet-9fa9c1c6'
+
+eval set -- "$TEMP"
+while true; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+            ;;
+            -p|--aws-profile)
+                AWS_PROFILE=$2; shift; shift; continue
+            ;;
+            -r|--role-arn)
+                ROLE_ARN=$2; shift; shift; continue
+            ;;
+            -m|--mfa-user)
+                MFA_USER=$2; shift; shift; continue
+            ;;
+            -t|--token-code)
+                TOKEN_CODE=$2; shift; shift; continue
+            ;;
+            -v|--vpc-id)
+                VPC_ID=$2; shift; shift; continue
+            ;;
+            -s|--subnets)
+                SUBNETS=$2; shift; shift; continue
+            ;;
+            --)
+                # no more arguments to parse
+                break
+            ;;
+            *)
+                printf "Unknown option %s\n" "$1"
+                exit 1
+            ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                exit 1
+            ;;
+        esac
+done
+eval set -- "$@"
+
+if [[ $COMMAND = 'auth' && ( $TOKEN_CODE = 'undefined' || $MFA_USER = 'undefined' || $ROLE_ARN = 'undefined' ) ]]; then
+    usage
+    exit 1
+fi
+
+eval $COMMAND $AWS_PROFILE $ROLE_ARN $MFA_USER $TOKEN_CODE $VPC_ID $SUBNETS

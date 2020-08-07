@@ -1,0 +1,28 @@
+version: '3.0'
+services:
+  simple-web-service:
+    image: 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
+    # https://docs.docker.com/compose/compose-file/#logging
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ecs/simple-web-service
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: web
+  aws:
+    # https://docs.docker.com/compose/compose-file/#logging
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ecs/simple-web-service
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: aws
+  redis:
+    # https://docs.docker.com/compose/compose-file/#logging
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: ecs/simple-web-service
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: redis
+

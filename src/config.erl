@@ -27,6 +27,7 @@
 
 -define(SERVER, ?MODULE).
 -define(LHTTPC_POOL_CONFIG, lhttpc_pool_config).
+-define(CONFIGURATION_CHECK_PERIOD, 10000).
 
 %% ------------------------------------------------------------------
 %% Record Definitions
@@ -85,7 +86,7 @@ init(_) ->
                     [set, named_table, protected,
                      {read_concurrency, true}]),
 
-    erlang:send_after(5000, self(), check_config),
+    erlang:send_after(?CONFIGURATION_CHECK_PERIOD, self(), check_config),
     {ok, #state{current_version = undefined,
                 table = Table}}.
 
@@ -128,7 +129,7 @@ handle_info(check_config,
             false ->
                 State0
         end,
-    erlang:send_after(5000, self(), check_config),
+    erlang:send_after(?CONFIGURATION_CHECK_PERIOD, self(), check_config),
     {noreply, State};
 handle_info(Msg, State) ->
     lager:notice("unhandled info ~p for state ~p",

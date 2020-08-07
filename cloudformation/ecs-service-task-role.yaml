@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Creates an ECS Service Task Role"
+Resources:
+  ECSServiceTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: simple-web-server-ecs-service-task-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+
+Outputs:
+  ECSServiceTaskRole:
+    Value:
+      Ref: ECSServiceTaskRole
+    Export:
+      Name:
+        simple-web-server-ecs-service-task-role
+

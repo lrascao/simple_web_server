@@ -1,7 +1,13 @@
 # syntax = docker/dockerfile:experimental
 
+# This Dockerfile was heavily influenced by adoptingerlang.org and is
+# lightly annotated, for more insights consult
+#       https://adoptingerlang.org/docs/production/docker/
+
 # This Dockerfile makes use of Multi-stage builds
 #   https://docs.docker.com/develop/develop-images/multistage-build/
+# and Docker BuildX
+#   https://docs.docker.com/buildx/working-with-buildx/
 
 # https://docs.docker.com/engine/reference/builder/#from
 #   "The FROM instruction initializes a new build stage and sets the
@@ -51,8 +57,8 @@ RUN mkdir /root/.ssh
 #   StrictHostKeyChecking no
 #
 # also notice that you will need to link/copy the .pem of your external
-# dependency repo to the root of this project so the --mount directive below
-# can find it
+# dependency repo to the root of this project so the --mount directive
+# a few lines below can find it
 COPY docker/ssh-config /root/.ssh/config
 
 # create a new deps compiling layer for later re-use
@@ -94,7 +100,7 @@ RUN mkdir -p /opt/rel
 RUN --mount=type=cache,id=apk,sharing=locked,target=/var/cache/apk \
     apk add --update tar
 
-# generate the release tarball and unpack it to the target dir
+# generate the release tarball and unpack it to the target dir (/opt/rel)
 RUN rebar3 as docker tar && \
     tar -zxvf $REBAR_BASE_DIR/docker/rel/*/*.tar.gz -C /opt/rel
 

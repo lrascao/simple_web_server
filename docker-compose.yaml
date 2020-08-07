@@ -1,0 +1,72 @@
+#
+# This docker compose will spin up all infrastructure necessary to run a simple web server
+# Full docker-compose file reference: (https://docs.docker.com/compose/compose-file/)
+#
+# Endpoints:
+#
+#   - S3 (to deploy configuration into)
+#       - http://{$SERVICE_ADDRESS:-localhost}:4566
+#
+#       - find current latest configuration version
+#           $ scripts/config latest
+#       - download configuration version <version>
+#           $ scripts/config download --version <version>
+#       - upload configuration from <from> to version <version>
+#           $ scripts/config upload --from <from> --version <version>
+#       - set latest configuration version to <version>
+#           $ scripts/config latest --version <version>
+#
+#   - Localstack web UI
+#       - http://{$SERVICE_ADDRESS:-localhost}:9090
+#   - Redis
+#       - {$SERVICE_ADDRESS:-localhost}:6379
+#
+#   - Web service endpoint: 
+#       - http://{$SERVICE_ADDRESS:-localhost}:8585
+#       - available routes:
+#           GET /v1/health                (curl -v -X GET http://localhost:8585/v1/health) 
+#
+#           PUT /v1/account/<username>    (curl -X PUT http://localhost:8585/v1/account/<name>)
+#           GET /v1/account/<userid>      (curl -X GET http://localhost:8585/v1/account/<userid>)
+#
+#           GET /v1/config/<key>          (curl -X GET http://localhost:8585/v1/config/<key>)
+#       
+#       - client helper script:
+#           $ scripts/client new --account-name test
+#           $ scripts/client get --account-id <account-id>
+# 
+version: '3.0'
+services:
+  aws:
+    image: localstack/localstack:0.11.4
+    # https://docs.docker.com/compose/compose-file/#ports
+    ports:
+        - "4566-4584:4566-4584"
+        - "${PORT_WEB_UI-9090}:${PORT_WEB_UI-9090}"
+    # https://docs.docker.com/compose/compose-file/#environment
+    environment:
+        - SERVICES=s3,sqs,ec2,sns,dynamodb
+        - PORT_WEB_UI=${PORT_WEB_UI-9090}
+        - DEFAULT_REGION=us-west-2
+        - HOST_TMP_FOLDER=/tmp
+  redis:
+    image: redis:3.2.12
+    ports:
+      - "6379:6379"
+    command: [ "redis-server" ]
+  simple-web-service:
+    # to attach to this Erlang node:
+    #   docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
+    # https://docs.docker.com/compose/compose-file/#ports
+    ports:
+      - "8585:8585/tcp"
+    environment:
+        - AWS_REGION=us-west-2
+        - AWS_ACCOUNT_ID=000000000000
+
+networks:
+  frontend:
+      driver: bridge
+  backend:
+      driver: bridge
+

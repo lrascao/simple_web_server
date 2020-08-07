@@ -4,9 +4,9 @@ die() { echo "$@" 1>&2 ; exit 1; }
 
 usage()
 {
-    echo "config download|upload|latest <options>"
+    echo "config create|download|upload|latest <options>"
     echo "  options:"
-	echo "   [--endpoint <target version>]"
+	echo "   [--endpoint <target endpoint>]"
 	echo "   [--version <version>]"
 	echo "   [--from <folder>]"
 	echo
@@ -17,12 +17,52 @@ usage()
 	echo " config upload --version <version> [--from <folder, default is cwd>]"
 }
 
+create()
+{
+    ENDPOINT=$1
+
+    #
+    # upload to localstack S3
+    #
+    S3_PUBLIC_POLICY="
+    {
+      \"Version\":\"2012-10-17\",
+      \"Statement\":[
+        {
+          \"Sid\":\"AllowPublicRead\",
+          \"Effect\":\"Allow\",
+          \"Principal\": {
+            \"AWS\": \"*\"
+          },
+          \"Action\": \"s3:GetObject\",
+          \"Resource\":[\"arn:aws:s3:::simple-web-server/*\"]
+          }
+      ]
+    }
+    "
+    echo $S3_PUBLIC_POLICY > public-policy.json
+
+    echo "creating simple-web-server bucket"
+    # the bucket might have been already created, don't fail if so
+    aws --endpoint-url=$ENDPOINT s3 mb s3://simple-web-server || true
+    echo "done"
+
+    echo "setting a policy for the simple-web-server bucket"
+    aws --endpoint-url=$ENDPOINT s3api put-bucket-policy --bucket simple-web-server --policy file://public-policy.json || true
+    rm public-policy.json
+    echo "done"
+
+    echo "setting an acl for the simple-web-server bucket"
+    aws --endpoint-url=$ENDPOINT s3api put-bucket-acl --bucket simple-web-server --acl public-read
+    echo "done"
+}
+
 download()
 {
     ENDPOINT=$1
     VERSION=$2
 
-    aws --quiet --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/$VERSION/config.json config.json
+    aws --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/$VERSION/config.json config.json
 }
 
 upload()
@@ -31,7 +71,7 @@ upload()
     VERSION=$2
     FROM=$3
 
-    aws --quiet --endpoint-url=$ENDPOINT s3 cp $FROM/config.json s3://simple-web-server/$VERSION/config.json
+    aws --endpoint-url=$ENDPOINT s3 cp $FROM/config.json s3://simple-web-server/$VERSION/config.json
 }
 
 latest()
@@ -40,7 +80,7 @@ latest()
     VERSION=$2
 
     if [[ $VERSION == 'undefined' ]]; then
-        aws --quiet --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/latest.txt .
+        aws --endpoint-url=$ENDPOINT s3 cp s3://simple-web-server/latest.txt .
         LATEST=$(cat latest.txt)
         rm latest.txt
         echo $LATEST
@@ -48,14 +88,14 @@ latest()
     fi
 
     echo $VERSION > latest.txt
-    aws --quiet --endpoint-url=$ENDPOINT s3 cp latest.txt s3://simple-web-server/latest.txt
+    aws --endpoint-url=$ENDPOINT s3 cp latest.txt s3://simple-web-server/latest.txt
     rm latest.txt
 }
 
 COMMAND=$1; shift
 
 # check for empty args
-if [[ $COMMAND != 'latest' && $@ = '' ]]; then
+if [[ $COMMAND != 'latest' && $COMMAND != 'create' && $@ = '' ]]; then
     usage
     exit 1
 fi
@@ -67,7 +107,7 @@ TEMP=$(getopt -n version --options e:,v:,f:,h:: --longoptions endpoint:,version:
 
 # by default, module version attributes will not be bumped
 VERSION='undefined'
-ENDPOINT='http://localhost:4572/'
+ENDPOINT='http://${SERVICE_ADDRESS:-localhost}:4566/'
 FROM=`pwd`
 
 eval set -- "$TEMP"

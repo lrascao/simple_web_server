@@ -32,5 +32,12 @@ terminate(_Reason, _Req, _State) ->
 
 handle_request(<<"POST">>, <<"/v1/setup/create_tables">>, Req0) ->
     lager:debug("creating ddb tables"),
-    simple_web_server_db:create_tables(),
-    {ok, <<>>, 200, Req0}.
+    case catch simple_web_server_db:create_tables() of
+        ok ->
+            lager:debug("ddb tables created successfully"),
+            {ok, <<>>, 200, Req0};
+        Error ->
+            lager:error("ddb table creation failed due to ~p",
+                        [Error]),
+            {ok, <<>>, 500, Req0}
+    end.

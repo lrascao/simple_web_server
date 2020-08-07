@@ -35,11 +35,10 @@
 #   - DynamoDB
 #       - docker/localstack/data/dynamodb
 # 
-version: '3.7'
+version: '3.0'
 services:
   aws:
     image: localstack/localstack:0.11.0
-    hostname: aws.local
     ports:
         - "4567-4568:4567-4568" # exclude dynamodb port (4569), we're using it below outside of localstack
         - "4570-4584:4570-4584"
@@ -50,7 +49,12 @@ services:
         - DATA_DIR=/tmp/localstack/data
         - DEFAULT_REGION=us-west-2
     networks:
-      - backend
+      backend:
+        aliases:
+          - sqs.us-west-2.amazonaws.com
+          - ec2.us-west-2.amazonaws.com
+          - sns.us-west-2.amazonaws.com
+          - s3.us-west-2.amazonaws.com
     volumes:
         # /docker-entrypoint-initaws.d is a reserved folder for localstack that
         # is a sort of init.d, all scripts in it will get executed in alphabetical
@@ -68,7 +72,6 @@ services:
         - "4572"  # localstack's S3 service port
   dynamodb:
     image: amazon/dynamodb-local:1.12.0
-    hostname: dynamodb.local
     environment:
         - ./Djava.library.path=./DynamoDBLocal_lib
     working_dir: /home/dynamodblocal
@@ -80,12 +83,13 @@ services:
     ports:
       - "4569:4569"
     networks:
-      - backend
+      backend:
+        aliases:
+          - dynamodb.us-west-2.amazonaws.com
     expose:
       - 4569
   redis:
     image: redis:3.2.12
-    hostname: redis.local
     ports:
       - "6379:6379"
     networks:
@@ -99,13 +103,9 @@ services:
     # to attach to this Erlang node:
     #   docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
     image: simple_web_server:latest
-    hostname: webserver.local
     # https://docs.docker.com/compose/compose-file/#ports
     ports:
-      - target: 8585
-        published: 8585
-        protocol: tcp
-        mode: host
+      - "8585:8585/tcp"
     environment:
         - AWS_REGION=us-west-2
         - AWS_ACCOUNT_ID=000000000000
@@ -113,14 +113,6 @@ services:
     networks:
       - frontend
       - backend
-    links:
-        # creates internal alias so we don't have to go around
-        # changing all our overlay vars
-        - dynamodb:dynamodb.us-west-2.amazonaws.com
-        - aws:sqs.us-west-2.amazonaws.com
-        - aws:ec2.us-west-2.amazonaws.com
-        - aws:sns.us-west-2.amazonaws.com
-        - aws:s3.us-west-2.amazonaws.com
     depends_on:
         - aws
         - redis
@@ -139,12 +131,6 @@ services:
     networks:
       - frontend
       - backend
-    links:
-        - dynamodb:dynamodb.us-west-2.amazonaws.com
-        - aws:sqs.us-west-2.amazonaws.com
-        - aws:ec2.us-west-2.amazonaws.com
-        - aws:sns.us-west-2.amazonaws.com
-        - aws:s3.us-west-2.amazonaws.com
 
 networks:
   frontend:

@@ -1,0 +1,27 @@
+# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
+version: 1
+task_definition:
+  ecs_network_mode: awsvpc
+  task_role_arn: pool-docker-ecs-service-task-role
+  # here is the IAM role name for the task execution
+  # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-cli-tutorial-fargate.html (Step 1.)
+  task_execution_role: pool-docker-ecs-task-execution-role
+  # valid limits: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
+  task_size:
+    mem_limit: 0.5GB
+    cpu_limit: 256
+docker_volumes:
+  - name: aws-docker-volume
+    scope: "shared"
+    autoprovision: true
+run_params:
+  network_configuration:
+    awsvpc_configuration:
+      subnets:
+        - "subnet-125c6e77"
+        - "subnet-471d4d30"
+        - "subnet-9fa9c1c6"
+      security_groups:
+        # simple-web-server-sg
+        - "sg-00109a65a25272a69"
+      assign_public_ip: ENABLED

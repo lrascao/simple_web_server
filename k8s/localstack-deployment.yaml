@@ -1,0 +1,52 @@
+#
+### Localstack
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+  labels:
+    app: localstack
+spec:
+  type: LoadBalancer
+  selector:
+    app: localstack
+  ports:
+    - port: 4566
+      targetPort: 4566
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+  labels:
+    app: localstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        app: localstack
+    spec:
+      containers:
+      - name: localstack
+        env:
+        - name: DEFAULT_REGION
+          value: us-west-2
+        - name: HOST_TMP_FOLDER
+          value: /tmp
+        - name: PORT_WEB_UI
+          value: "9090"
+        - name: SERVICES
+          value: s3,sqs,ec2,sns,dynamodb
+        image: localstack/localstack:0.11.4
+        ports:
+        - containerPort: 4566
+      restartPolicy: Always
+

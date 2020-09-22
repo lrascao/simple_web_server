@@ -69,10 +69,10 @@ LABEL stage=deps-compiler
 # every time you change something in the rebar.config or rebar.lock files
 # this layer will get rebuilt
 COPY rebar.config rebar.lock .
-RUN --mount=id=deps-cache,type=cache,sharing=shared,target=/root/.cache/rebar3 \
+RUN --mount=type=cache,id=deps-cache,sharing=shared,target=/root/.cache/rebar3 \
     # the following line is how you transport secrets into the container, one
     # such example for a secret is the .pem key that allows fetch of private deps
-    # from a repo as in the example above
+    # from a repo as in the example below
     --mount=type=secret,id=stash-miniclip-com-pem.key,target=/root/.ssh/stash-miniclip-com-pem.key \
     --mount=type=ssh \
     rebar3 as docker compile

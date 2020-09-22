@@ -107,7 +107,7 @@ TEMP=$(getopt -n version --options e:,v:,f:,h:: --longoptions endpoint:,version:
 
 # by default, module version attributes will not be bumped
 VERSION='undefined'
-ENDPOINT='http://${SERVICE_ADDRESS:-localhost}:4566/'
+ENDPOINT='http://${SERVICE_ENDPOINT:-localhost:4566}/'
 FROM=`pwd`
 
 eval set -- "$TEMP"

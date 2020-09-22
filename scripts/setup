@@ -17,8 +17,7 @@ TEMP=$(getopt -n version --options e:,h:: --longoptions endpoint:,help:: -- $@)
 # Die if they fat finger arguments, this program will be run as root
 [ $? = 0 ] || die "Error parsing arguments. version --help"
 
-# by default, module version attributes will not be bumped
-ENDPOINT='http://localhost:8585'
+ENDPOINT='http://${SERVICE_ENDPOINT:-localhost:8585}'
 
 eval set -- "$TEMP"
 while true; do
@@ -46,4 +45,4 @@ while true; do
 done
 eval set -- "$@"
 
-curl --silent -X POST $ENDPOINT/v1/setup/create_tables
+eval curl --silent -X POST $ENDPOINT/v1/setup/create_tables

@@ -56,5 +56,8 @@ fargate-down:
 fargate-ps:
 	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service ps
 
+k8s-secrets:
+	kubectl create secret docker-registry regcred --docker-server=879202131194.dkr.ecr.us-west-2.amazonaws.com --docker-username=AWS --docker-password=`aws --profile miniclippool ecr get-login-password --region us-west-2` --docker-email=luis.rascao@miniclip.com
+
 include rebar3.mk
 

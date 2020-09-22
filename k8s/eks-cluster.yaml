@@ -1,0 +1,22 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: simple-web-service
+  region: us-west-2
+
+vpc:
+  subnets:
+    private:
+      us-west-2a: { id: subnet-125c6e77 }
+      us-west-2b: { id: subnet-471d4d30 }
+      us-west-2c: { id: subnet-9fa9c1c6 }
+
+nodeGroups:
+  - name: ng-1-workers
+    labels: {
+      role: workers
+    }
+    instanceType: t2.small
+    desiredCapacity: 1
+    privateNetworking: true

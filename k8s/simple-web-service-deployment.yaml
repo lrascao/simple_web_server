@@ -1,0 +1,62 @@
+#
+### Simple web server
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-web-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: simple-web-service
+  ports:
+    - port: 8585
+      targetPort: 8585
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: simple-web-service
+  name: simple-web-service
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      app: simple-web-service
+  template:
+    metadata:
+      labels:
+        app: simple-web-service
+    spec:
+      # the folowing 'hostname' and 'subdomain' fields are necessary
+      # for the pod to have a FQDN which is a requirement to running distributed
+      # Erlang
+      hostname: simple-web-service
+      subdomain: local
+      # this is where the AWS secret is kept to access the private ECR registry
+      # holding the simple_web_server docker image
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: simple-web-service
+          # image: simple-web-server:latest
+          image: 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
+          # the following instructs k8s to not try and pull the image externally
+          # but instead consider the image in the node
+          # https://kubernetes.io/docs/concepts/containers/images/
+          # imagePullPolicy: Never
+          env:
+            - name: AWS_ACCOUNT_ID
+              value: "000000000000"
+            - name: AWS_REGION
+              value: us-west-2
+          ports:
+            - containerPort: 8585
+          resources: {}
+      restartPolicy: Always
+

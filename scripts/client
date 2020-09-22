@@ -4,7 +4,7 @@ die() { echo "$@" 1>&2 ; exit 1; }
 
 usage()
 {
-    echo "client new|get|setup <options>"
+    echo "client new|get <options>"
     echo "  options:"
 	echo "   [--endpoint <http://localhost:8585>]"
 	echo "   [--account-name <name>]"
@@ -13,13 +13,6 @@ usage()
 	echo "Examples:"
 	echo " client new --account-name luis"
 	echo " client get --account-id <account_id>"
-}
-
-setup()
-{
-    ENDPOINT=$1
-    
-    curl --silent -X POST $ENDPOINT/v1/setup/create_tables
 }
 
 new()
@@ -52,7 +45,7 @@ TEMP=$(getopt -n version --options e:,i:,n:,h:: --longoptions endpoint:,account-
 [ $? = 0 ] || die "Error parsing arguments. version --help"
 
 # by default, module version attributes will not be bumped
-ENDPOINT='http://${SERVICE_ADDRESS:-localhost}:8585'
+ENDPOINT='http://${SERVICE_ENDPOINT:-localhost:8585}'
 ACCOUNT_ID='undefined'
 ACCOUNT_NAME='undefined'
 

@@ -9,14 +9,14 @@ services:
         awslogs-group: ecs/simple-web-service
         awslogs-region: us-west-2
         awslogs-stream-prefix: web
-  aws:
+  localstack:
     # https://docs.docker.com/compose/compose-file/#logging
     logging:
       driver: awslogs
       options:
         awslogs-group: ecs/simple-web-service
         awslogs-region: us-west-2
-        awslogs-stream-prefix: aws
+        awslogs-stream-prefix: localstack
   redis:
     # https://docs.docker.com/compose/compose-file/#logging
     logging:

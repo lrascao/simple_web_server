@@ -1,6 +1,6 @@
 version: '3.0'
 services:
-  aws:
+  localstack:
     networks:
       backend:
         aliases:
@@ -24,7 +24,7 @@ services:
     hostname: webserver.local
     image: simple-web-server:latest
     depends_on:
-        - aws
+        - localstack
         - redis
     # https://docs.docker.com/compose/compose-file/#network-configuration-reference
     networks:

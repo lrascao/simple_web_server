@@ -46,6 +46,9 @@ local-up:
 local-down:
 	docker-compose --file docker-compose.local.yaml --file docker-compose.yaml down
 
+local-console:
+	docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
+
 fargate-up:
 	# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-service-up.html
 	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --ecs-params ecs-params.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service up --create-log-groups 

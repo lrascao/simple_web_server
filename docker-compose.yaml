@@ -37,7 +37,7 @@
 # 
 version: '3.0'
 services:
-  aws:
+  localstack:
     image: localstack/localstack:0.11.4
     # https://docs.docker.com/compose/compose-file/#ports
     ports:

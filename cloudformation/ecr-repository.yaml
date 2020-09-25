@@ -8,3 +8,11 @@ Resources:
       RepositoryName: simple-web-server
 
 
+Outputs:
+  ServiceECRRepository:
+    Value:
+      Ref: ServiceECRRepository
+    Export:
+      Name:
+        simple-web-server-ecr-repository
+

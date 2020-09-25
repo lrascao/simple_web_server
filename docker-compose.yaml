@@ -38,6 +38,7 @@
 version: '3.0'
 services:
   localstack:
+    # https://hub.docker.com/r/localstack/localstack
     image: localstack/localstack:0.11.4
     # https://docs.docker.com/compose/compose-file/#ports
     ports:
@@ -45,6 +46,7 @@ services:
         - "${PORT_WEB_UI-9090}:${PORT_WEB_UI-9090}"
     # https://docs.docker.com/compose/compose-file/#environment
     environment:
+        # https://github.com/localstack/localstack
         - SERVICES=s3,sqs,ec2,sns,dynamodb
         - PORT_WEB_UI=${PORT_WEB_UI-9090}
         - DEFAULT_REGION=us-west-2

@@ -44,12 +44,12 @@ spec:
         - name: regcred
       containers:
         - name: simple-web-service
-          # image: simple-web-server:latest
-          image: 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
+          image: simple-web-server:latest
+          # image: 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
           # the following instructs k8s to not try and pull the image externally
           # but instead consider the image in the node
           # https://kubernetes.io/docs/concepts/containers/images/
-          # imagePullPolicy: Never
+          imagePullPolicy: Never
           env:
             - name: AWS_ACCOUNT_ID
               value: "000000000000"

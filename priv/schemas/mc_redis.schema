@@ -1,0 +1,8 @@
+%%-*- mode: erlang -*-
+
+%% @doc Size of Redis worker pool
+{mapping, "redis.workers", "mc_redis.poolgirl.size", [
+    {default, 10},
+    {datatype, integer}
+]}.
+

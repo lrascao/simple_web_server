@@ -2,5 +2,4 @@
 
 -setcookie simple_web_server_cookie
 
-+K true
-+A30
+-args_file releases/{{release_version}}/vm.generated.args

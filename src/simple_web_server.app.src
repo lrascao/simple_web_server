@@ -9,7 +9,6 @@
         stdlib,
         cowboy,
         erlydtl,
-        jsx,
         erlcloud,
         lager,
         lhttpc,

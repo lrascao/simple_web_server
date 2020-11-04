@@ -9,6 +9,9 @@
 # and Docker BuildX
 #   https://docs.docker.com/buildx/working-with-buildx/
 
+# Pull down the desired rebar3 image version
+FROM rebar3:latest as rebar3
+
 # https://docs.docker.com/engine/reference/builder/#from
 #   "The FROM instruction initializes a new build stage and sets the
 #    Base Image for subsequent instructions."
@@ -16,6 +19,10 @@ FROM erlang:21.3.8.7-alpine as service-builder
 # https://docs.docker.com/engine/reference/builder/#label
 #   "The LABEL instruction adds metadata to an image."
 LABEL stage=builder
+
+# copy the rebar3 over from the rebar3 docker image and
+# overwriting the one being used by alpine
+COPY --from=rebar3 /usr/local/bin/rebar3 /usr/local/bin/rebar3
 
 # https://docs.docker.com/engine/reference/builder/#user
 USER root

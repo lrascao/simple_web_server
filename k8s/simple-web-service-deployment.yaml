@@ -16,6 +16,47 @@ spec:
 
 ---
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: erlang-vm-k8s-conf
+data:
+  erlang-vm-k8s.conf: |
+    ## all parameters are available at
+    #   https://github.com/lrascao/rebar3_scuttler/blob/develop/priv/erlang.vm.args.schema
+    ##  
+    ## Sets scheduler busy wait threshold. Defaults to medium.
+    ## The threshold determines how long schedulers are to busy wait when
+    ## running out of work before going to sleep.
+    ## Note: This flag can be removed or changed at any time without prior notice.
+    ##
+    ## Acceptable values:
+    ##   - one of: none, very_short, short, medium, long, very_long
+    erlang.sbwt = none
+
+    ## Sets the number of scheduler threads to create and scheduler threads to set online.
+    ## The maximum for both values is 1024.
+    ## If the Erlang runtime system is able to determine the number of logical processors
+    ## configured and logical processors available,
+    ## Schedulers defaults to logical processors configured, and SchedulersOnline defaults to
+    ## logical processors available; otherwise the default values are 1.
+    ## If the emulator detects that it is subject to a CPU quota, the default value for
+    ## SchedulersOnline will be limited accordingly.
+    ## Schedulers can be omitted if :SchedulerOnline is not and conversely.
+    ## The number of schedulers online can be changed at runtime through
+    ## erlang:system_flag(schedulers_online, SchedulersOnline).
+    ## If Schedulers or SchedulersOnline is specified as a negative number, the value is
+    ## subtracted from the default number of logical processors configured or logical
+    ## processors available, respectively.
+    ## Specifying value 0 for Schedulers or SchedulersOnline resets the number of scheduler
+    ## threads or scheduler threads online, respectively, to its default value.
+    ##
+    ## Acceptable values:
+    ##   - an integer
+    erlang.schedulers.total = `cat erlang-vm-total-schedulers`
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,6 +84,8 @@ spec:
       imagePullSecrets:
         - name: regcred
       containers:
+        # connect to this pod's Erlang VM with:
+        #    kubectl exec -it <pod name> -- /srv/simple_web_server/bin/simple_web_server remote_console
         - name: simple-web-service
           image: simple-web-server:latest
           # image: 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
@@ -57,6 +100,31 @@ spec:
               value: us-west-2
           ports:
             - containerPort: 8585
-          resources: {}
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "250Mi"
+            limits:
+              cpu: "2000m"
+              memory: "1Gi"
+          volumeMounts:
+            - name: erlang-vm-k8s
+              mountPath: /srv/service/etc/conf.d/erlang-vm-k8s.conf
+              subPath: erlang-vm-k8s.conf
+            - name: erlang-vm-k8s-downwardapi
+              mountPath: /srv/service/etc/conf.d/erlang-vm-total-schedulers
+              subPath: erlang-vm-total-schedulers
+      volumes:
+        - name: erlang-vm-k8s
+          configMap:
+            name: erlang-vm-k8s-conf
+        - name: erlang-vm-k8s-downwardapi
+          downwardAPI:
+            items:
+              - path: erlang-vm-total-schedulers
+                resourceFieldRef:
+                  containerName: simple-web-service
+                  resource: limits.cpu
+                  divisor: 1
       restartPolicy: Always
 

@@ -22,6 +22,7 @@ LABEL stage=builder
 
 # copy the rebar3 over from the rebar3 docker image and
 # overwriting the one being used by alpine
+COPY --from=rebar3 /opt/.cache/rebar3 /opt/.cache/rebar3
 COPY --from=rebar3 /usr/local/bin/rebar3 /usr/local/bin/rebar3
 
 # https://docs.docker.com/engine/reference/builder/#user

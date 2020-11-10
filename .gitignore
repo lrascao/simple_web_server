@@ -19,4 +19,4 @@ rebar3.crashdump
 
 docker/localstack/data
 
-stash-miniclip-com-pem.key
+private-key-repo-pem.key

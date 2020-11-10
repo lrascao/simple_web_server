@@ -40,24 +40,24 @@ docker-push:
 	docker tag simple-web-server:latest 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
 	docker push 879202131194.dkr.ecr.us-west-2.amazonaws.com/simple-web-server:latest
 
-local-up:
-	docker-compose --file docker-compose.local.yaml --file docker-compose.yaml up
+# local-up:
+# 	docker-compose --file docker-compose.local.yaml --file docker-compose.yaml up
 
-local-down:
-	docker-compose --file docker-compose.local.yaml --file docker-compose.yaml down
+# local-down:
+# 	docker-compose --file docker-compose.local.yaml --file docker-compose.yaml down
 
-local-console:
-	docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
+# local-console:
+# 	docker exec --tty --interactive simple_web_server_simple-web-service_1 /srv/service/bin/simple_web_server remote_console
 
-fargate-up:
-	# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-service-up.html
-	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --ecs-params ecs-params.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service up --create-log-groups 
+# fargate-up:
+# 	# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-service-up.html
+# 	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --ecs-params ecs-params.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service up --create-log-groups 
 
-fargate-down:
-	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --ecs-params ecs-params.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service down
+# fargate-down:
+# 	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --ecs-params ecs-params.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service down
 
-fargate-ps:
-	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service ps
+# fargate-ps:
+# 	ecs-cli compose --project-name simple-web-server --file docker-compose.yaml --file docker-compose.fargate.yaml --cluster-config simple-web-server --ecs-profile simple-web-server-profile service ps
 
 k8s-secrets:
 	kubectl create secret docker-registry regcred --docker-server=879202131194.dkr.ecr.us-west-2.amazonaws.com --docker-username=AWS --docker-password=`aws --profile miniclippool ecr get-login-password --region us-west-2` --docker-email=luis.rascao@miniclip.com

@@ -36,15 +36,18 @@ handle_request(<<"PUT">>, <<"/v1/account/", Name/binary>>, Req0) ->
     {ok, UserId} = simple_web_server_db:new_account(Name),
     % cache the newly inserted data 
     {ok, TTL} = config:get(redis_ttl, 10),
-    mc_redis:q(["SETEX", UserId, TTL,
-                jsx:encode(#{user_id => UserId,
-                             name => Name})]),
+    {ok, RedisClient} = new_eredis_client(),
+    eredis:q(RedisClient, ["SETEX", UserId, TTL,
+                           jsx:encode(#{user_id => UserId,
+                                        name => Name})]),
+    eredis:stop(RedisClient),
     {ok, UserId, 200, Req0};
 handle_request(<<"GET">>, <<"/v1/account/", UserId/binary>>, Req0) ->
     lager:debug("looking up ~p's account",
                 [UserId]),
+    {ok, RedisClient} = new_eredis_client(),
     % hit the cache first
-    case mc_redis:q(["GET", UserId]) of
+    case eredis:q(RedisClient, ["GET", UserId]) of
         {ok, undefined} ->
             lager:debug("cache miss on key ~p, hitting db",
                         [UserId]),
@@ -52,17 +55,26 @@ handle_request(<<"GET">>, <<"/v1/account/", UserId/binary>>, Req0) ->
                 {ok, #{name := Name} = Data} ->
                     % cache the newly fetched data
                     {ok, TTL} = config:get(redis_ttl, 10),
-                    mc_redis:q(["SETEX", UserId, TTL,
-                                jsx:encode(#{user_id => UserId,
-                                             name => Name})]),
+                    eredis:q(RedisClient, ["SETEX", UserId, TTL,
+                                           jsx:encode(#{user_id => UserId,
+                                                        name => Name})]),
+                    eredis:stop(RedisClient),
                     {ok, jsx:encode(Data), 200, Req0};
                 _ ->
+                    eredis:stop(RedisClient),
                     {ok, <<>>, 404, Req0}
             end;
         {ok, Data} ->
+            eredis:stop(RedisClient),
             lager:debug("cache hit on key ~p",
                         [UserId]),
             % no need to jsx encode here, it was already encoded when
             % cached
             {ok, Data, 200, Req0}
     end.
+
+-spec new_eredis_client() -> {ok, pid()}.
+new_eredis_client() ->
+    {ok, Host} = application:get_env(eredis, host),
+    {ok, Port} = application:get_env(eredis, port),
+    eredis:start_link(tcp, Host, Port).

@@ -1,6 +1,6 @@
 
 Host stash stash.miniclip.com
     HostName stash.miniclip.com
-    IdentityFile ~/.ssh/stash-miniclip-com-pem.key
+    IdentityFile ~/.ssh/private-key-repo-pem.key
     
 StrictHostKeyChecking no

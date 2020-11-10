@@ -15,7 +15,7 @@
         recon,
         uuid,
         jsx,
-        mc_redis
+        eredis
     ]},
     {mod, {simple_web_server_app, []}},
     {env, [

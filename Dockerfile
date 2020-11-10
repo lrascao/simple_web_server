@@ -81,7 +81,7 @@ RUN --mount=type=cache,id=deps-cache,sharing=shared,target=/root/.cache/rebar3 \
     # the following line is how you transport secrets into the container, one
     # such example for a secret is the .pem key that allows fetch of private deps
     # from a repo as in the example below
-    --mount=type=secret,id=stash-miniclip-com-pem.key,target=/root/.ssh/stash-miniclip-com-pem.key \
+    --mount=type=secret,id=private-key-repo-pem.key,target=/root/.ssh/private-key-repo-pem.key \
     --mount=type=ssh \
     rebar3 as docker compile
 

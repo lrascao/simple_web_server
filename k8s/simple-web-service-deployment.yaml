@@ -114,6 +114,9 @@ spec:
             - name: erlang-vm-k8s-downwardapi
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-schedulers
               subPath: erlang-vm-total-schedulers
+            - name: erlang-vm-k8s-downwardapi
+              mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
+              subPath: erlang-vm-total-memory
       volumes:
         - name: erlang-vm-k8s
           configMap:
@@ -126,5 +129,10 @@ spec:
                   containerName: simple-web-service
                   resource: limits.cpu
                   divisor: 1
+              - path: erlang-vm-total-memory
+                resourceFieldRef:
+                  containerName: simple-web-service
+                  resource: limits.memory
+                  divisor: 1Mi
       restartPolicy: Always
 

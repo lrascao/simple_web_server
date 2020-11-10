@@ -1,6 +1,6 @@
 
-Host stash stash.miniclip.com
-    HostName stash.miniclip.com
+Host private-git-repo private-git-repo.com
+    HostName private-git-repo.com
     IdentityFile ~/.ssh/private-key-repo-pem.key
     
 StrictHostKeyChecking no

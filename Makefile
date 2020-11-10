@@ -26,7 +26,7 @@ docker-build:
 	# * --tag (https://docs.docker.com/engine/reference/commandline/build/#tag-an-image--t)
 	#		Tags an image
 	#
-	DOCKER_BUILDKIT=1 docker build --build-arg BUILD_ID=1 --ssh default --secret id=stash-miniclip-com-pem.key,src=stash-miniclip-com-pem.key --tag simple-web-server:latest .
+	DOCKER_BUILDKIT=1 docker build --build-arg BUILD_ID=1 --ssh default --secret id=private-key-repo-pem.key,src=private-key-repo-pem.key --tag simple-web-server:latest .
 
 docker-push:
 	# before tagging and pushing to ECR you'll need to obtain AWS credentials:

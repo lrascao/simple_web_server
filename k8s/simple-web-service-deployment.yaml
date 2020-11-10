@@ -19,6 +19,17 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: redis-conf
+data:
+  redis.conf: |
+    redis.host = redis
+    redis.port = 6379
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: erlang-vm-k8s-conf
 data:
   erlang-vm-k8s.conf: |
@@ -108,6 +119,9 @@ spec:
               cpu: "2000m"
               memory: "1Gi"
           volumeMounts:
+            - name: redis-conf
+              mountPath: /srv/service/etc/conf.d/redis.conf
+              subPath: redis.conf
             - name: erlang-vm-k8s
               mountPath: /srv/service/etc/conf.d/erlang-vm-k8s.conf
               subPath: erlang-vm-k8s.conf
@@ -118,6 +132,9 @@ spec:
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
               subPath: erlang-vm-total-memory
       volumes:
+        - name: redis-conf
+          configMap:
+            name: redis-conf
         - name: erlang-vm-k8s
           configMap:
             name: erlang-vm-k8s-conf

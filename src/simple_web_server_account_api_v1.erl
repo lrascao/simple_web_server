@@ -6,6 +6,9 @@
 -export([init/2,
          terminate/3]).
 
+-define(DEFAULT_REDIS_DATABASE, 0).
+-define(DEFAULT_REDIS_PASSWORD, "password").
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Behaviour callbacks
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,4 +80,8 @@ handle_request(<<"GET">>, <<"/v1/account/", UserId/binary>>, Req0) ->
 new_eredis_client() ->
     {ok, Host} = application:get_env(eredis, host),
     {ok, Port} = application:get_env(eredis, port),
-    eredis:start_link(tcp, Host, Port).
+    Database = application:get_env(eredis, database,
+                                   ?DEFAULT_REDIS_DATABASE),
+    Password = application:get_env(eredis, password,
+                                   ?DEFAULT_REDIS_PASSWORD),
+    eredis:start_link(tcp, Host, Port, Database, Password).

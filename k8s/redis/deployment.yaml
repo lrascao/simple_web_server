@@ -35,11 +35,20 @@ spec:
         app: redis
     spec:
       containers:
-      - args:
-        - redis-server
+      - name: redis
         image: redis:3.2.12
-        name: redis
+        command:
+          - redis-server
+          - /etc/redis.conf
         ports:
         - containerPort: 6379
         resources: {}
+        volumeMounts:
+          - name: redis-conf
+            mountPath: /etc/redis.conf
+            subPath: redis.conf
       restartPolicy: Always
+      volumes:
+        - name: redis-conf
+          configMap:
+            name: redis-conf

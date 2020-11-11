@@ -19,7 +19,7 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: redis-conf
+  name: conf.simple-web-server.redis
 data:
   redis.conf: |
     redis.host = redis
@@ -30,7 +30,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: erlang-vm-k8s-conf
+  name: conf.simple-web-server.erlang-vm
 data:
   erlang-vm-k8s.conf: |
     ## all parameters are available at
@@ -103,7 +103,7 @@ spec:
           # the following instructs k8s to not try and pull the image externally
           # but instead consider the image in the node
           # https://kubernetes.io/docs/concepts/containers/images/
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           env:
             - name: AWS_ACCOUNT_ID
               value: "000000000000"
@@ -119,26 +119,32 @@ spec:
               cpu: "2000m"
               memory: "1Gi"
           volumeMounts:
-            - name: redis-conf
+            - name: vol-redis-conf
               mountPath: /srv/service/etc/conf.d/redis.conf
               subPath: redis.conf
-            - name: erlang-vm-k8s
+            - name: vol-redis-password-conf
+              mountPath: /srv/service/etc/conf.d/redis-password.conf
+              subPath: redis-password.conf
+            - name: vol-erlang-vm
               mountPath: /srv/service/etc/conf.d/erlang-vm-k8s.conf
               subPath: erlang-vm-k8s.conf
-            - name: erlang-vm-k8s-downwardapi
+            - name: vol-erlang-vm-downwardapi
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-schedulers
               subPath: erlang-vm-total-schedulers
-            - name: erlang-vm-k8s-downwardapi
+            - name: vol-erlang-vm-downwardapi
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
               subPath: erlang-vm-total-memory
       volumes:
-        - name: redis-conf
+        - name: vol-redis-conf
           configMap:
-            name: redis-conf
-        - name: erlang-vm-k8s
+            name: conf.simple-web-server.redis
+        - name: vol-redis-password-conf
+          secret:
+            secretName: secret-redis-password
+        - name: vol-erlang-vm
           configMap:
-            name: erlang-vm-k8s-conf
-        - name: erlang-vm-k8s-downwardapi
+            name: conf.simple-web-server.erlang-vm
+        - name: vol-erlang-vm-downwardapi
           downwardAPI:
             items:
               - path: erlang-vm-total-schedulers

@@ -11,3 +11,9 @@
     {datatype, integer},
     {default, {{redis_port}}}
 ]}.
+
+%% @doc Redis password
+{mapping, "redis.password", "eredis.password", [
+    {datatype, string}
+]}.
+

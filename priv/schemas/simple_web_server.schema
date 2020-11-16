@@ -1,13 +1,6 @@
 %%-*- mode: erlang -*-
 
 %% @doc 
-% {mapping, "simple_web_server.ip_address", "simple_web_server.ip_address", [
-%     {default, "0.0.0.0"},
-%     {datatype, ip},
-%     hidden
-% ]}.
-
-%% @doc 
 {mapping, "simple_web_server.port", "simple_web_server.http", [
     {default, {{http_port}}},
     {datatype, integer}
@@ -34,6 +27,12 @@
 %% @doc 
 {mapping, "simple_web_server.configuration_url", "simple_web_server.configuration_url", [
     {default, "{{configuration_url}}/simple-web-server/latest.txt"},
+    {datatype, string}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.k8s_dns_discovery", "simple_web_server.k8s_dns_discovery", [
+    hidden,
     {datatype, string}
 ]}.
 

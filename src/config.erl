@@ -1,4 +1,3 @@
-% @copyright Miniclip SA, 2019. All rights reserved.
 -module(config).
 -behaviour(gen_server).
 

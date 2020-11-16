@@ -11,4 +11,5 @@ start_link() ->
 
 init([]) ->
     {ok, { {one_for_one, 10, 10},
-           [?CHILD(config, worker)]} }.
+           [?CHILD(config, worker),
+            ?CHILD(simple_web_server_node_boot, worker)]} }.

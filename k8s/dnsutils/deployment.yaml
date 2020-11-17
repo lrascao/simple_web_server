@@ -5,9 +5,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis
+  name: dnsutils
   labels:
-    app: redis
+    app: dnsutils
 spec:
   replicas: 1
   strategy: {}

@@ -9,8 +9,9 @@
 # and Docker BuildX
 #   https://docs.docker.com/buildx/working-with-buildx/
 
-# Pull down the desired rebar3 image version
-FROM rebar3:latest as rebar3
+# Pull down the desired rebar3 image version, here we want the rebar3 dev channel
+# which is an image with all the dependencies pinned to latest master
+FROM lrascao/rebar3:dev as rebar3
 
 # https://docs.docker.com/engine/reference/builder/#from
 #   "The FROM instruction initializes a new build stage and sets the

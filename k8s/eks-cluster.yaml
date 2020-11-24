@@ -3,14 +3,17 @@ kind: ClusterConfig
 
 metadata:
   name: simple-web-service
-  region: us-west-2
+  region: eu-central-1
 
 vpc:
   subnets:
     private:
-      us-west-2a: { id: subnet-125c6e77 }
-      us-west-2b: { id: subnet-471d4d30 }
-      us-west-2c: { id: subnet-9fa9c1c6 }
+      # subnets below should be public, otherwise your load balances won't
+      # be able to created without using tags as described in:
+      #   https://github.com/kubernetes/kubernetes/issues/29298#issuecomment-274400650
+      eu-central-1a: { id: subnet-db113cb0 }
+      eu-central-1b: { id: subnet-f3019a8e }
+      eu-central-1c: { id: subnet-827b0dcf }
 
 nodeGroups:
   - name: ng-1-workers

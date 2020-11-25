@@ -7,7 +7,7 @@
          terminate/3]).
 
 -define(DEFAULT_REDIS_DATABASE, 0).
--define(DEFAULT_REDIS_PASSWORD, "password").
+-define(DEFAULT_REDIS_PASSWORD, "").
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Behaviour callbacks

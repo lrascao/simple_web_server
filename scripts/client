@@ -4,7 +4,7 @@ die() { echo "$@" 1>&2 ; exit 1; }
 
 usage()
 {
-    echo "client new|get <options>"
+    echo "client new|get|connect <options>"
     echo "  options:"
 	echo "   [--endpoint <http://localhost:8585>]"
 	echo "   [--account-name <name>]"
@@ -13,6 +13,7 @@ usage()
 	echo "Examples:"
 	echo " client new --account-name luis"
 	echo " client get --account-id <account_id>"
+	echo " client connect --account-id <account_id>"
 }
 
 new()
@@ -31,10 +32,19 @@ get()
     curl --silent -X GET $ENDPOINT/v1/account/$ACCOUNT_ID
 }
 
+connect()
+{
+    ENDPOINT=$1
+    ACCOUNT_ID=$2
+
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    python3 $DIR/ws_client.py --endpoint $ENDPOINT --account_id $ACCOUNT_ID --token $ACCOUNT_ID
+}
+
 COMMAND=$1; shift
 
 # check for empty args
-if [[ ( $COMMAND != 'get' && $COMMAND != 'setup' ) && $@ = '' ]]; then
+if [[ ( $COMMAND != 'get' && $COMMAND != 'setup' && $COMMAND != 'connect' ) && $@ = '' ]]; then
     usage
     exit 1
 fi

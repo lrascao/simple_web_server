@@ -1,7 +1,7 @@
 .DS_Store
-.git
-.gitignore
-.gitsecret
+# .git
+# .gitignore
+# .gitsecret
 _build
 _checkouts
 Dockerfile

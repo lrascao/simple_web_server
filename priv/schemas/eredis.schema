@@ -1,0 +1,19 @@
+%%-*- mode: erlang -*-
+
+%% @doc Redis host
+{mapping, "redis.host", "eredis.host", [
+    {datatype, string},
+    {default, "{{redis_host}}"}
+]}.
+
+%% @doc Redis port
+{mapping, "redis.port", "eredis.port", [
+    {datatype, integer},
+    {default, {{redis_port}}}
+]}.
+
+%% @doc Redis password
+{mapping, "redis.password", "eredis.password", [
+    {datatype, string}
+]}.
+

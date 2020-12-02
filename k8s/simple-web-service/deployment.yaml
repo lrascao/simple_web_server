@@ -1,0 +1,206 @@
+#
+### Simple web server
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-web-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: simple-web-service
+  ports:
+    - port: 8585
+      targetPort: 8585
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-web-service-headless
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: simple-web-service
+  ports:
+    - name: discovery
+      protocol: TCP
+      port: 8585
+      targetPort: 8585
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf.simple-web-server.redis
+data:
+  redis.conf: |
+    redis.host = redis
+    redis.port = 6379
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf.simple-web-server-k8s.discovery
+data:
+  simple-web-service-k8s-discovery.conf: |
+    # The headless service that allows k8s node discovery, according to the spec
+    # (https://github.com/kubernetes/dns/blob/master/docs/specification.md) SRV records are of the form
+    #   _<port>._<proto>.<service>.<ns>.svc.<zone>.
+    simple_web_server.k8s_dns_discovery = _discovery._tcp.simple-web-service-headless
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf.simple-web-server.erlang-vm
+data:
+  erlang-vm-k8s.conf: |
+    ## all parameters are available at
+    #   https://github.com/lrascao/rebar3_scuttler/blob/develop/priv/erlang.vm.args.schema
+    ##  
+    ## Sets scheduler busy wait threshold. Defaults to medium.
+    ## The threshold determines how long schedulers are to busy wait when
+    ## running out of work before going to sleep.
+    ## Note: This flag can be removed or changed at any time without prior notice.
+    ##
+    ## Acceptable values:
+    ##   - one of: none, very_short, short, medium, long, very_long
+    erlang.sbwt = none
+
+    ## Sets the number of scheduler threads to create and scheduler threads to set online.
+    ## The maximum for both values is 1024.
+    ## If the Erlang runtime system is able to determine the number of logical processors
+    ## configured and logical processors available,
+    ## Schedulers defaults to logical processors configured, and SchedulersOnline defaults to
+    ## logical processors available; otherwise the default values are 1.
+    ## If the emulator detects that it is subject to a CPU quota, the default value for
+    ## SchedulersOnline will be limited accordingly.
+    ## Schedulers can be omitted if :SchedulerOnline is not and conversely.
+    ## The number of schedulers online can be changed at runtime through
+    ## erlang:system_flag(schedulers_online, SchedulersOnline).
+    ## If Schedulers or SchedulersOnline is specified as a negative number, the value is
+    ## subtracted from the default number of logical processors configured or logical
+    ## processors available, respectively.
+    ## Specifying value 0 for Schedulers or SchedulersOnline resets the number of scheduler
+    ## threads or scheduler threads online, respectively, to its default value.
+    ##
+    ## Acceptable values:
+    ##   - an integer
+    erlang.schedulers.total = `cat erlang-vm-total-schedulers`
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: simple-web-service
+  name: simple-web-service
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      app: simple-web-service
+  template:
+    metadata:
+      labels:
+        app: simple-web-service
+    spec:
+      # The folowing 'subdomain' field is necessary for the pod to have a FQDN which
+      # is a requirement to running distributed Erlang.
+      #
+      # By *not* specifying a `hostname` field we're asking k8s to use the pod name instead of it's ip address.
+      # By matching the 'subdomain' field with the name of the headless service we'll conform to the SRV record spec
+      # (https://github.com/kubernetes/dns/blob/master/docs/specification.md), that has the format:
+      #
+      #      _<port>._<proto>.<service>.<ns>.svc.<zone>. <ttl> IN SRV <weight> <priority> <port-number> <service>.<ns>.svc.<zone>.
+      #
+      # (https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#srv-records)
+      #
+      subdomain: simple-web-service-headless
+      containers:
+        # connect to this pod's Erlang VM with:
+        #    kubectl exec -it <pod name> -- /srv/simple_web_server/bin/simple_web_server remote_console
+        # you can also run one liners with the `eval` sub-command
+        #    kubectl exec -it <pod name> -- /srv/simple_web_server/bin/simple_web_server eval 'nodes().'
+        - name: simple-web-service
+          # the following instructs k8s to not try and pull the image externally
+          # but instead consider the image in the node
+          # https://kubernetes.io/docs/concepts/containers/images/
+          image: simple-web-server:latest
+          imagePullPolicy: IfNotPresent
+          #
+          # If, however you are using external registries and are wondering why your changes
+          # are not reflected in your deployment, then you want to always pull the images.
+          # image: lrascao/simple-web-server:latest
+          # imagePullPolicy: Always
+          env:
+            - name: AWS_ACCOUNT_ID
+              value: "000000000000"
+            - name: AWS_REGION
+              value: us-west-2
+          ports:
+            - containerPort: 8585
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "200Mi"
+            limits:
+              cpu: "2000m"
+              memory: "500Mi"
+          volumeMounts:
+            - name: vol-simple-web-server-k8s-discovery-conf
+              mountPath: /srv/service/etc/conf.d/simple-web-service-k8s-discovery.conf
+              subPath: simple-web-service-k8s-discovery.conf
+            - name: vol-redis-conf
+              mountPath: /srv/service/etc/conf.d/redis.conf
+              subPath: redis.conf
+            - name: vol-redis-password-conf
+              mountPath: /srv/service/etc/conf.d/redis-password.conf
+              subPath: redis-password.conf
+            - name: vol-erlang-vm
+              mountPath: /srv/service/etc/conf.d/erlang-vm-k8s.conf
+              subPath: erlang-vm-k8s.conf
+            - name: vol-erlang-vm-downwardapi
+              mountPath: /srv/service/etc/conf.d/erlang-vm-total-schedulers
+              subPath: erlang-vm-total-schedulers
+            - name: vol-erlang-vm-downwardapi
+              mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
+              subPath: erlang-vm-total-memory
+      volumes:
+        - name: vol-redis-conf
+          configMap:
+            name: conf.simple-web-server.redis
+        - name: vol-simple-web-server-k8s-discovery-conf
+          configMap:
+            name: conf.simple-web-server-k8s.discovery
+        - name: vol-redis-password-conf
+          secret:
+            secretName: secret-redis-password
+        - name: vol-erlang-vm
+          configMap:
+            name: conf.simple-web-server.erlang-vm
+        - name: vol-erlang-vm-downwardapi
+          downwardAPI:
+            items:
+              - path: erlang-vm-total-schedulers
+                resourceFieldRef:
+                  containerName: simple-web-service
+                  resource: limits.cpu
+                  divisor: 1
+              - path: erlang-vm-total-memory
+                resourceFieldRef:
+                  containerName: simple-web-service
+                  resource: limits.memory
+                  divisor: 1Mi
+      restartPolicy: Always
+

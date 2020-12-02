@@ -1,0 +1,7 @@
+configMapGenerator:
+  - name: redis-conf
+    files:
+      - redis.conf
+
+generatorOptions:
+  disableNameSuffixHash: true

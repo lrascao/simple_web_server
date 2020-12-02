@@ -1,0 +1,7 @@
+%%-*- mode: erlang -*-
+
+%% @doc Number of default workers for each lhttpc pool
+{mapping, "lhttpc.pool_size", "lhttpc.pool_size", [
+    {default, 10},
+    {datatype, integer}
+]}.

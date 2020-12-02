@@ -24,7 +24,7 @@ compile: rebar3
 dialyzer: compile
 	@$(REBAR3) dialyzer
 
-rel: rebar3
+release: rebar3
 	@$(REBAR3) release
 
 run: rebar3

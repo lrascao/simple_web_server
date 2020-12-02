@@ -1,7 +1,7 @@
 %%-*- mode: erlang -*-
 {application, simple_web_server, [
     {description, "simple_web_server"},
-    {vsn, "1"},
+    {vsn, "0.1.0"},
     {modules, []},
     {registered, []},
     {applications, [
@@ -9,7 +9,13 @@
         stdlib,
         cowboy,
         erlydtl,
-        jsx
+        erlcloud,
+        lager,
+        lhttpc,
+        recon,
+        uuid,
+        jsx,
+        eredis
     ]},
     {mod, {simple_web_server_app, []}},
     {env, [

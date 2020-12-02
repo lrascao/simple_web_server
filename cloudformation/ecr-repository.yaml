@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Creates an ECR image repository"
+Resources:
+  ServiceECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageTagMutability: MUTABLE
+      RepositoryName: simple-web-server
+
+
+Outputs:
+  ServiceECRRepository:
+    Value:
+      Ref: ServiceECRRepository
+    Export:
+      Name:
+        simple-web-server-ecr-repository
+

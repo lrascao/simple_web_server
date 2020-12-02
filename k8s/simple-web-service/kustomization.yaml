@@ -1,0 +1,7 @@
+secretGenerator:
+  - name: secret-redis-password
+    files:
+      - redis-password.conf
+
+generatorOptions:
+  disableNameSuffixHash: true

@@ -16,3 +16,7 @@ rebar3
 rebar3.crashdump
 *.swo
 *.swp
+
+docker/localstack/data
+
+private-key-repo-pem.key

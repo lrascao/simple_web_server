@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Creates an ECS Task Execution Role"
+Resources:
+    ECSTaskExecutionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName: simple-web-server-ecs-task-execution-role
+          AssumeRolePolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service: ecs-tasks.amazonaws.com
+                Action: 'sts:AssumeRole'
+
+    ECSTaskExecutionPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            PolicyName: simple-web-server-ecs-task-execution-policy
+            PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Action:
+                      - ecr:GetAuthorizationToken
+                      - ecr:BatchCheckLayerAvailability
+                      - ecr:GetDownloadUrlForLayer
+                      - ecr:BatchGetImage
+                      - logs:CreateLogStream
+                      - logs:PutLogEvents
+                  Resource: "*"
+            Roles:
+                - !Ref 'ECSTaskExecutionRole'
+
+Outputs:
+  ECSServiceTaskRole:
+    Value:
+      Ref: ECSTaskExecutionRole
+    Export:
+      Name:
+        simple-web-server-ecs-task-execution-role
+

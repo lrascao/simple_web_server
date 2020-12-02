@@ -1,0 +1,28 @@
+# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
+version: 1
+task_definition:
+  ecs_network_mode: awsvpc
+  # this is the output of ecs-service-task-role.yaml
+  task_role_arn: simple-web-server-ecs-service-task-role
+  # here is the IAM role name for the task execution
+  # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-cli-tutorial-fargate.html (Step 1.)
+  # this is the output of ecs-task-execution-role.yaml
+  task_execution_role: simple-web-server-ecs-task-execution-role
+  # valid limits: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html
+  task_size:
+    mem_limit: 0.5GB
+    cpu_limit: 256
+run_params:
+  network_configuration:
+    awsvpc_configuration:
+      subnets:
+        - "subnet-125c6e77"
+        - "subnet-471d4d30"
+        - "subnet-9fa9c1c6"
+      security_groups:
+        # Output of ecs-simple-web-server-sg.yaml cloudformation stack
+        - "sg-0224b6d4300236d93"
+        # the all traffic security group which only allows people connected to the vpn
+        # to access this service's private ip address
+        - "sg-008a8372d186f4858"
+      assign_public_ip: ENABLED

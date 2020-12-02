@@ -1,0 +1,38 @@
+%%-*- mode: erlang -*-
+
+%% @doc 
+{mapping, "simple_web_server.port", "simple_web_server.http", [
+    {default, {{http_port}}},
+    {datatype, integer}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.workers", "simple_web_server.workers", [
+    {default, 5},
+    {datatype, integer}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.ddb_host", "simple_web_server.ddb_host", [
+    {default, {{{ddb_host}}}},
+    {datatype, string}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.ddb_port", "simple_web_server.ddb_port", [
+    {default, {{ddb_port}}},
+    {datatype, integer}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.configuration_url", "simple_web_server.configuration_url", [
+    {default, "{{configuration_url}}/simple-web-server/latest.txt"},
+    {datatype, string}
+]}.
+
+%% @doc 
+{mapping, "simple_web_server.k8s_dns_discovery", "simple_web_server.k8s_dns_discovery", [
+    hidden,
+    {datatype, string}
+]}.
+

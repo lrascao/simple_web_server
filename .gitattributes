@@ -1,0 +1,2 @@
+#pattern  filter=crypt diff=crypt merge=crypt
+k8s/simple-web-service/redis-password.conf filter=crypt diff=crypt merge=crypt

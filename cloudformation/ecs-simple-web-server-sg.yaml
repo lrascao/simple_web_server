@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ECS Container security group'
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'VPC where the infrastructure is created. Default: Default VPC '
+    Default: vpc-4d1c3228
+
+Resources:
+    ECSSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName:
+            Fn::Sub: ecs-simple-web-server-sg-${VpcId}
+        GroupDescription: ECS EFS access
+        VpcId: !Ref 'VpcId'
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  ECSSecurityGroup:
+    Value: !Ref ECSSecurityGroup
+    Export:
+      Name:
+        Fn::Sub: ecs-simple-web-server-sg-${VpcId}

@@ -1,0 +1,54 @@
+#
+### Redis
+#
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  type: LoadBalancer
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:3.2.12
+        command:
+          - redis-server
+          - /etc/redis.conf
+        ports:
+        - containerPort: 6379
+        resources: {}
+        volumeMounts:
+          - name: redis-conf
+            mountPath: /etc/redis.conf
+            subPath: redis.conf
+      restartPolicy: Always
+      volumes:
+        - name: redis-conf
+          configMap:
+            name: redis-conf

@@ -1,0 +1,94 @@
+#!/bin/sh
+
+die() { echo "$@" 1>&2 ; exit 1; }
+
+usage()
+{
+    echo "client new|get|connect <options>"
+    echo "  options:"
+	echo "   [--endpoint <http://localhost:8585>]"
+	echo "   [--account-name <name>]"
+	echo "   [--account-id <id>]"
+	echo
+	echo "Examples:"
+	echo " client new --account-name luis"
+	echo " client get --account-id <account_id>"
+	echo " client connect --account-id <account_id>"
+}
+
+new()
+{
+    ENDPOINT=$1
+    ACCOUNT_NAME=$3
+    
+    curl --silent -X PUT $ENDPOINT/v1/account/$ACCOUNT_NAME
+}
+
+get()
+{
+    ENDPOINT=$1
+    ACCOUNT_ID=$2
+
+    curl --silent -X GET $ENDPOINT/v1/account/$ACCOUNT_ID
+}
+
+connect()
+{
+    ENDPOINT=$1
+    ACCOUNT_ID=$2
+
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    python3 $DIR/ws_client.py --endpoint $ENDPOINT --account_id $ACCOUNT_ID --token $ACCOUNT_ID
+}
+
+COMMAND=$1; shift
+
+# check for empty args
+if [[ ( $COMMAND != 'get' && $COMMAND != 'setup' && $COMMAND != 'connect' ) && $@ = '' ]]; then
+    usage
+    exit 1
+fi
+
+# Parse arguments
+TEMP=$(getopt -n version --options e:,i:,n:,h:: --longoptions endpoint:,account-name:,account-id:,help:: -- $@)
+# Die if they fat finger arguments, this program will be run as root
+[ $? = 0 ] || die "Error parsing arguments. version --help"
+
+# by default, module version attributes will not be bumped
+ENDPOINT='http://${SERVICE_ENDPOINT:-localhost:8585}'
+ACCOUNT_ID='undefined'
+ACCOUNT_NAME='undefined'
+
+eval set -- "$TEMP"
+while true; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+            ;;
+            -e|--endpoint)
+                ENDPOINT=$2; shift; shift; continue
+            ;;
+		    -i|--account-id)
+				ACCOUNT_ID=$2; shift; shift; continue
+		    ;;
+		    -n|--account-name)
+				ACCOUNT_NAME=$2; shift; shift; continue
+		    ;;
+            --)
+                # no more arguments to parse
+                break
+            ;;
+            *)
+                printf "Unknown option %s\n" "$1"
+                exit 1
+            ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                exit 1
+            ;;
+        esac
+done
+eval set -- "$@"
+
+eval $COMMAND $ENDPOINT $ACCOUNT_ID $ACCOUNT_NAME

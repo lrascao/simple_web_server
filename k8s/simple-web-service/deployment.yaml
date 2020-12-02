@@ -136,12 +136,12 @@ spec:
           # the following instructs k8s to not try and pull the image externally
           # but instead consider the image in the node
           # https://kubernetes.io/docs/concepts/containers/images/
-          image: simple-web-server:latest
+          image: simple-web-server:0.1.0
           imagePullPolicy: IfNotPresent
           #
           # If, however you are using external registries and are wondering why your changes
           # are not reflected in your deployment, then you want to always pull the images.
-          # image: lrascao/simple-web-server:latest
+          # image: lrascao/simple-web-server:0.1.0
           # imagePullPolicy: Always
           env:
             - name: AWS_ACCOUNT_ID

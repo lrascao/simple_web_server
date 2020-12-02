@@ -14,7 +14,7 @@ docker-login:
 	docker login
 
 ifeq ($(TAG),)
-    TAG := latest
+    TAG:=$(shell git describe --tags)
 endif
 
 docker-build:

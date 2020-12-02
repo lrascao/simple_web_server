@@ -1,7 +1,7 @@
 %%-*- mode: erlang -*-
 {application, simple_web_server, [
     {description, "simple_web_server"},
-    {vsn, "0.1.1"},
+    {vsn, git},
     {modules, []},
     {registered, []},
     {applications, [

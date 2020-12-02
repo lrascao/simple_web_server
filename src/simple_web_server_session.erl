@@ -20,8 +20,6 @@
 
 -define(SERVER, ?MODULE).
 
--define(VERSION, <<"v1">>).
-
 %% ------------------------------------------------------------------
 %% Record Definitions
 %% ------------------------------------------------------------------
@@ -74,8 +72,9 @@ handle_call(Msg, From, State) ->
 
 handle_cast(#{type := <<"version">>},
             #state{connection_pid = ConnectionPid} = State) ->
+    {simple_web_server, _, Version} = lists:keyfind(simple_web_server, 1, application:which_applications()),
     ConnectionPid ! {reply, #{type => version,
-                              version => ?VERSION}},
+                              version => list_to_binary(Version)}},
     {noreply, State};
 handle_cast(Msg, State) ->
     lager:notice("unhandled cast ~p for state ~p",

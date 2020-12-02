@@ -13,6 +13,9 @@ docker-login:
 	# 	--password-stdin <aws-ecr-endpoint>
 	docker login
 
+ifeq ($(TAG),)
+    TAG := latest
+endif
 
 docker-build:
 	# * --build-arg (https://docs.docker.com/engine/reference/commandline/build/#set-build-time-variables---build-arg)
@@ -27,7 +30,7 @@ docker-build:
 	# * --tag (https://docs.docker.com/engine/reference/commandline/build/#tag-an-image--t)
 	#		Tags an image
 	#
-	DOCKER_BUILDKIT=1 docker build --build-arg BUILD_ID=1 --ssh default --secret id=private-key-repo-pem.key,src=private-key-repo-pem.key --tag simple-web-server:latest .
+	DOCKER_BUILDKIT=1 docker build --build-arg BUILD_ID=1 --ssh default --secret id=private-key-repo-pem.key,src=private-key-repo-pem.key --tag simple-web-server:${TAG} .
 
 docker-push:
 	# before tagging and pushing to ECR you'll need to obtain AWS credentials:
@@ -40,8 +43,8 @@ docker-push:
     #           	--password-stdin <aws-ecr-endpoint>
 	#
 	#  below we're pushing to docker hub so no need to worry about any of that
-	docker tag simple-web-server:latest lrascao/simple-web-server:latest
-	docker push lrascao/simple-web-server:latest
+	docker tag simple-web-server:${TAG} lrascao/simple-web-server:${TAG}
+	docker push lrascao/simple-web-server:${TAG}
 
 k8s-secrets:
 	kubectl create secret docker-registry regcred --docker-server=<aws-ecr-endpoint> --docker-username=AWS --docker-password=`aws --profile <aws-profile> ecr get-login-password --region <aws-region>` --docker-email=<email>

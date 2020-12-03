@@ -176,6 +176,8 @@ spec:
             - name: vol-erlang-vm-downwardapi
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
               subPath: erlang-vm-total-memory
+            - name: vol-simple-web-server-upgrades
+              mountPath: /tmp/simple-web-server/upgrades
       volumes:
         - name: vol-redis-conf
           configMap:
@@ -202,5 +204,10 @@ spec:
                   containerName: simple-web-service
                   resource: limits.memory
                   divisor: 1Mi
+        - name: vol-simple-web-server-upgrades
+          hostPath:
+            # directory location on host
+            path: /tmp/simple-web-server/upgrades
+            type: Directory
       restartPolicy: Always
 

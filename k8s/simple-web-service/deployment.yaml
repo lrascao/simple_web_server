@@ -205,9 +205,10 @@ spec:
                   resource: limits.memory
                   divisor: 1Mi
         - name: vol-simple-web-server-upgrades
+          # https://kubernetes.io/docs/concepts/storage/volumes/#hostpath-configuration-example
           hostPath:
             # directory location on host
-            path: /tmp/simple-web-server/upgrades
-            type: Directory
+            path: /tmp/simple-web-server-upgrades
+            type: DirectoryOrCreate
       restartPolicy: Always
 

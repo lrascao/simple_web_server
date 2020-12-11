@@ -32,6 +32,9 @@ docker-build:
 	#
 	DOCKER_BUILDKIT=1 docker build --build-arg BUILD_ID=1 --ssh default --secret id=private-key-repo-pem.key,src=private-key-repo-pem.key --tag simple-web-server:${TAG} .
 
+docker-relup-build:
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.relup --build-arg BUILD_ID=1 --build-arg FROM_VERSION=$(FROM_VERSION) --build-arg TO_VERSION=$(TO_VERSION) --ssh default --secret id=private-key-repo-pem.key,src=private-key-repo-pem.key --tag simple-web-server-relup:$(FROM_VERSION)-$(TO_VERSION) .
+
 docker-push:
 	# before tagging and pushing to ECR you'll need to obtain AWS credentials:
 	# 	awscli v1:

@@ -4,7 +4,6 @@
 # .gitsecret
 _build
 _checkouts
-Dockerfile
 .dockerignore
 private-key-repo-pem.key
 

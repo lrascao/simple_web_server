@@ -115,6 +115,9 @@ spec:
       labels:
         app: simple-web-service
     spec:
+      # this is the service account that allows the sidecar container to watch the API Server for new ReleaseUpgrades
+      serviceAccount: erlang-relup-service-account
+
       # The folowing 'subdomain' field is necessary for the pod to have a FQDN which
       # is a requirement to running distributed Erlang.
       #
@@ -127,6 +130,11 @@ spec:
       # (https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#srv-records)
       #
       subdomain: simple-web-service-headless
+      # https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace
+      # shareProcessNamespace allows both containers, the erlang application and the sidecar to share process pids,
+      # this means that the erlang relup sidecar container is able to talk to the erlang release application,
+      # it also is able to access it's filesystem through /proc/<pid>/root
+      shareProcessNamespace: true
       containers:
         # connect to this pod's Erlang VM with:
         #    kubectl exec -it <pod name> -- /srv/simple_web_server/bin/simple_web_server remote_console
@@ -136,13 +144,17 @@ spec:
           # the following instructs k8s to not try and pull the image externally
           # but instead consider the image in the node
           # https://kubernetes.io/docs/concepts/containers/images/
-          # image: simple-web-server:0.1.6
+          # image: simple-web-server:latest
           # imagePullPolicy: IfNotPresent
           #
           # If, however you are using external registries and are wondering why your changes
           # are not reflected in your deployment, then you want to always pull the images.
-          image: lrascao/simple-web-server:latest-stable
+          image: lrascao/simple-web-server:latest
           imagePullPolicy: Always
+          #
+          # the commmand override below is to allow you to debug why a container is not starting
+          # command: ["/bin/sh"]
+          # args: ["-c", "sleep 1000"]
           env:
             - name: AWS_ACCOUNT_ID
               value: "000000000000"
@@ -176,6 +188,32 @@ spec:
             - name: vol-erlang-vm-downwardapi
               mountPath: /srv/service/etc/conf.d/erlang-vm-total-memory
               subPath: erlang-vm-total-memory
+        - name: erlang-relup-sidecar
+          # the following instructs k8s to not try and pull the image externally
+          # but instead consider the image in the node
+          # https://kubernetes.io/docs/concepts/containers/images/
+          # image: erlang-relup-sidecar:latest
+          # imagePullPolicy: IfNotPresent
+          #
+          # If, however you are using external registries and are wondering why your changes
+          # are not reflected in your deployment, then you want to always pull the images.
+          image: lrascao/erlang-relup-sidecar:latest
+          imagePullPolicy: Always
+          #
+          # the commmand override below is to allow you to debug why a container is not starting
+          # command: ["/bin/sh"]
+          # args: ["-c", "sleep 3600"]
+          env:
+            # the directory where the release upgrade tarball will be available from when directed
+            - name: UPGRADE_SOURCE_DIR
+              value: "/tmp/simple-web-server/upgrades"
+            # root dir of the release
+            - name: RELEASE_ROOT_DIR
+              value: "/srv/service"
+            # release name
+            - name: RELEASE_NAME
+              value: "simple_web_server"
+          volumeMounts:
             - name: vol-simple-web-server-upgrades
               mountPath: /tmp/simple-web-server/upgrades
       volumes:

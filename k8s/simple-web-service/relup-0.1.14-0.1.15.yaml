@@ -1,0 +1,16 @@
+apiVersion: relup.lrascao.github.io/v1alpha1
+kind: ReleaseUpgrade
+metadata:
+  name: relup-0-1-14-0-1-l5
+spec:
+  relup:
+    name: relup-0-1-14-0-1-15-img
+    image: simple-web-server-relup:0.1.14-0.1.15
+    tarball: /srv/upgrade/simple_web_server-0.1.15.tar.gz
+    sourceVersion: 0.1.14
+    targetVersion: 0.1.15
+  volume:
+    # host path
+    hostPath: /tmp/simple-web-server-upgrades
+  deployment:
+    name: simple-web-service
